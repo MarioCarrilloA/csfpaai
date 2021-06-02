@@ -209,3 +209,98 @@ def format_model_output(e, avg_loss, tloss, pct_correct, pct_classes):
         output += "{}:{: <5.2f}% ".format(classes[i], pct_classes[i])
 
     return output
+
+
+class LayerFeatures():
+    features=None
+    def __init__(self, m):
+        self.hook = m.register_forward_hook(self.hook_fn)
+
+    def hook_fn(self, module, input, output):
+        self.features = output
+
+    def remove(self): self.hook.remove()
+
+
+def compute_CAM(feature_conv, class_weights):
+    _, nc, h, w = feature_conv.shape
+    feature_conv = feature_conv.reshape(nc, h*w)
+    CAM = class_weights.matmul(feature_conv)
+    CAM = CAM.reshape(h, w)
+    CAM = CAM - CAM.min()
+    CAM = CAM / CAM.max()
+
+    return CAM
+
+def get_one_random_sample(test_dataset):
+    num_total_imgs = len(test_dataset.data)
+    random_index = random.randint(1, num_total_imgs)
+    img = test_dataset.data[random_index]
+    label = test_dataset.targets[random_index]
+
+    return img, label
+
+
+def get_heatmaps(tensor, model):
+    prediction_var = Variable((tensor.unsqueeze(0)).cuda(), requires_grad=True)
+    final_layer = model._modules.get("resnet").layer4[-1]
+    activated_features = LayerFeatures(final_layer)
+
+    prediction = model(prediction_var)
+    pred_probabilities = F.softmax(prediction, dim=1).data.squeeze()
+    activated_features.remove()
+
+    # Indentify the predicted class
+    value, index = topk(pred_probabilities, 1)
+
+    # Get information from identified class
+    weight_softmax_params = list(model._modules.get('resnet').fc.parameters())
+    weight_softmax = weight_softmax_params[0]
+    class_id = topk(pred_probabilities,1)[1].int()
+    class_index = [class_id.item()]
+    class_weights = weight_softmax[class_index]
+    cam_img = compute_CAM(activated_features.features, class_weights)
+
+    # As we can see, our CAM size does not match with the our
+    # image. We need to resize our map and interpolate the values
+    # according to our image
+    ucam_img = cam_img.unsqueeze(dim=0)
+    ucam_img = ucam_img[None, :, :, :]
+    heat_map = F.interpolate(ucam_img, size=(32, 32), mode='bilinear')
+    heat_map = heat_map.squeeze(0)
+    heat_map = heat_map.squeeze(0)
+
+    return cam_img, heat_map, index, value
+
+
+def crop_preprocess(x, model):
+    # The 5% of the highest values represent a one of the most
+    # important values for classification. These values will be
+    # for experiments modified.
+    x = x.to(device)
+    cam_img, heat_map, index, value = get_heatmaps(x, model)
+    percentile = 95
+    h, w = heat_map.shape
+    feature_thld = torch.quantile(heat_map, percentile * 0.01)
+    heat_mask = heat_map.clone()
+    bk_mask = heat_map.clone()
+    heat_mask = torch.where(heat_mask >= feature_thld, 0.0, 1.0)
+    bk_mask =  torch.where(bk_mask >= feature_thld, 1.0, 0.0) # Replace value
+    x = torch.multiply(x, heat_mask)
+    x = x + bk_mask
+
+    return x.float()
+
+def show_sample_images(train_loader):
+    num_imgs_toshow= 10
+    data_iter = iter(train_loader)
+    images, labels = data_iter.next()
+    # convert images to numpy for display
+    images = images.cpu().numpy()
+
+    # plot the images in the batch, along with the corresponding labels
+    fig = plt.figure(figsize=(15, 5))
+    for i in np.arange(num_imgs_toshow):
+        ax = fig.add_subplot(2, num_imgs_toshow/2, i + 1, xticks=[], yticks=[])
+        plt.imshow(np.transpose(images[i], (1, 2, 0)))
+
