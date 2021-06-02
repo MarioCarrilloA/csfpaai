@@ -11,6 +11,8 @@ test_transform = transforms.Compose([
          #   normalize,
          ])
 
+epochs=5
+
 # Download & transform CIFAR-10 datasets
 train_full_dataset = datasets.CIFAR10("./data", train=True,
                                          transform=train_transform, download=True)
@@ -32,4 +34,4 @@ test_loader = torch.utils.data.DataLoader(test_dataset,
                                                   batch_size=5000, shuffle=False)
 
 
-model_base, pct_correct, pct_classes = build_model(train_loader, test_loader)
+model_base, pct_correct, pct_classes, trainl, testl = build_model(train_loader, test_loader, epochs)

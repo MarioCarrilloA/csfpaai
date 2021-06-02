@@ -66,9 +66,11 @@ class Model(torch.nn.Module):
 def foo():
     print("module loaded correctly!")
 
-def build_model(train_loader, test_loader, model_file="PAAI21_CIFAR10_model.pt"):
+
+
+def build_model(train_loader, test_loader, e, model_file="PAAI21_CIFAR10_model.pt"):
     # Hyperparameters
-    epochs=50
+    epochs=e
     lr=0.1
 
     model = Model()
@@ -81,19 +83,22 @@ def build_model(train_loader, test_loader, model_file="PAAI21_CIFAR10_model.pt")
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
     optimizer, milestones=milestones, gamma=0.1)
 
+    train_loss = []
+    test_loss = []
     print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
         loss, pct_correct, pct_classes = test_model(model, test_loader)
         output = format_model_output(epoch, avg_loss, loss, pct_correct, pct_classes)
+        train_loss.append(avg_loss)
+        test_loss.append(loss.item())
         print(output)
 
         scheduler.step()
 
     torch.save(model.state_dict(), model_file)
 
-    return model, pct_correct, pct_classes
-
+    return model, pct_correct, pct_classes, train_loss, test_loss
 
 
 def train_model(model, train_loader, optimizer, epoch, verbose=False):
