@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import numpy as np
 import random
 import skimage.transform
@@ -9,9 +9,9 @@ import torch.optim as optim
 from torch.utils.data import random_split
 import torchvision
 
-from keras.optimizers import SGD
-from matplotlib.pyplot import imshow
-from PIL import Image
+#from keras.optimizers import SGD
+#from matplotlib.pyplot import imshow
+#from PIL import Image
 from torch.autograd import Variable
 from torch import topk
 from torchvision import models, datasets, transforms
@@ -66,9 +66,9 @@ class Model(torch.nn.Module):
 def foo():
     print("module loaded correctly!")
 
-def build_model(train_loader, test_loader, output="PAAI21_CIFAR10_model.pt"):
+def build_model(train_loader, test_loader, model_file="PAAI21_CIFAR10_model.pt"):
     # Hyperparameters
-    epochs=8
+    epochs=50
     lr=0.1
 
     model = Model()
@@ -90,9 +90,9 @@ def build_model(train_loader, test_loader, output="PAAI21_CIFAR10_model.pt"):
 
         scheduler.step()
 
-    torch.save(model.state_dict(), output)
+    torch.save(model.state_dict(), model_file)
 
-    return model, pct_correct, pct_class
+    return model, pct_correct, pct_classes
 
 
 
