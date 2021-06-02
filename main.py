@@ -2,14 +2,13 @@ from nnu import *
 
 train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                ])
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+])
 
 test_transform = transforms.Compose([
         transforms.ToTensor(),
-         #   normalize,
-         ])
+])
 
 epochs=5
 
@@ -34,4 +33,6 @@ test_loader = torch.utils.data.DataLoader(test_dataset,
                                                   batch_size=5000, shuffle=False)
 
 
+# Train model and collect data
 model_base, pct_correct, pct_classes, trainl, testl = build_model(train_loader, test_loader, epochs)
+collect_results(epochs, pct_correct, trainl, testl, pct_classes, out_filename)

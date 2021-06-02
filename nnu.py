@@ -9,6 +9,9 @@ import torch.optim as optim
 from torch.utils.data import random_split
 import torchvision
 
+import os.path
+import random
+import json
 #from keras.optimizers import SGD
 #from matplotlib.pyplot import imshow
 #from PIL import Image
@@ -170,6 +173,30 @@ def test_model(model, test_loader, verbose=False):
 
     return loss, percentage_correct, percentage_classes
 
+def collect_results(epochs, accuracy, train_loss, test_loss, classes_pcts, out):
+    file_name = out
+    data_file = []
+    result_id = 0
+    if os.path.isfile(file_name) == True:
+        with open(file_name, 'r') as json_file:
+            data_file = json.load(json_file)
+            result_id = len(data_file) + 1
+            json_file.close()
+    else:
+        result_id = 1
+
+    res = {
+        "result_id" : result_id,
+        "epochs" : epochs,
+        "accuracy" : accuracy,
+        "train_loss" : train_loss,
+        "test_loss" : test_loss,
+        "classes_pcts": classes_pcts
+    }
+    data_file.append(res)
+    with open(file_name, 'w') as json_file:
+        json.dump(data_file, json_file, ensure_ascii=True, indent=4)
+        json_file.close()
 
 def format_model_output(e, avg_loss, tloss, pct_correct, pct_classes):
     output  = "Epoch:{: <2} ".format(e)
