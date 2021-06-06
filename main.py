@@ -1,5 +1,19 @@
 from nnu import *
 
+# CIFAR1-10 parameters
+input_size = 32
+num_classes = 10
+epochs=50
+out_filename = 'results.json'
+
+# Check for GPU/CPU to allocate tensor
+device = 'cuda'
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
+
+
 train_transform = transforms.Compose([
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
@@ -11,6 +25,7 @@ test_transform = transforms.Compose([
 ])
 
 epochs=50
+out_filename = 'results.json'
 
 # Download & transform CIFAR-10 datasets
 train_full_dataset = datasets.CIFAR10("./data", train=True,
@@ -40,6 +55,9 @@ collect_results(epochs, pct_correct, trainl, testl, pct_classes, out_filename)
 #########################################################################################################
 # SECOND ATTEMP
 #########################################################################################################
+
+print("------------------------------------------------")
+print("Executing new iteration")
 crop_transformation_a1 = transforms.Compose([
     transforms.RandomCrop(32, padding=4),#########################
     transforms.RandomHorizontalFlip(),##################################

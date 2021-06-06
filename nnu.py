@@ -277,6 +277,7 @@ def crop_preprocess(x, model):
     # The 5% of the highest values represent a one of the most
     # important values for classification. These values will be
     # for experiments modified.
+    device = 'cuda'
     x = x.to(device)
     cam_img, heat_map, index, value = get_heatmaps(x, model)
     percentile = 95
@@ -286,7 +287,7 @@ def crop_preprocess(x, model):
     bk_mask = heat_map.clone()
     heat_mask = torch.where(heat_mask >= feature_thld, 0.0, 1.0)
     bk_mask =  torch.where(bk_mask >= feature_thld, 1.0, 0.0) # Replace value
-    x = torch.multiply(x, heat_mask)
+    x = torch.mul(x, heat_mask)
     x = x + bk_mask
 
     return x.float()
