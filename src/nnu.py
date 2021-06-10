@@ -30,6 +30,7 @@ import os
 import pandas as pd
 from skimage import io
 from torch.utils.data import Dataset
+from torch.utils.data import Subset
 
 #####################################################################################################
 # Classes labels CIFAR-10
@@ -47,7 +48,7 @@ classes = ('plane',
 # CIFAR1-10 parameters
 input_size = 32
 num_classes = 10
-epochs=7
+epochs=50
 out_filename = 'results.json'
 
 train_transform = transforms.Compose([
@@ -241,7 +242,6 @@ def compute_CAM(feature_conv, class_weights):
     return CAM
 
 
-
 def get_one_random_sample(test_dataset):
     if isinstance(test_dataset, croppedCIFAR10):
         num_total_imgs = len(test_dataset)
@@ -251,6 +251,11 @@ def get_one_random_sample(test_dataset):
         imx = test_dataset[random_index][0]
         img = transforms.ToPILImage()(imx).convert("RGB")
         label = test_dataset[random_index][1]
+    elif isinstance(test_dataset, Subset):
+        num_total_imgs = len(test_dataset.dataset.data)
+        random_index = random.randint(1, num_total_imgs)
+        img = test_dataset.dataset.data[random_index]
+        label = test_dataset.dataset.targets[random_index]
     else:
         num_total_imgs = len(test_dataset.data)
         random_index = random.randint(1, num_total_imgs)
@@ -258,6 +263,10 @@ def get_one_random_sample(test_dataset):
         label = test_dataset.targets[random_index]
 
     return img, label
+
+
+
+
 
 def get_classes_percentage(targets, predictions):
     num_classes = len(classes)
@@ -465,9 +474,9 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation):
             save_image(cropped_image, image_path)
             row_list.append([image_name, label])
             i+=1
-            count += 1
-            if count == 100:
-                break
+            #count += 1
+            #if count == 100:
+            #    break
     else:
         for i in range(len(dset)):
             image = dset.dataset.data[i]
@@ -477,9 +486,9 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation):
             image_path = new_data + image_name
             save_image(cropped_image, image_path)
             row_list.append([image_name, label])
-            count += 1
-            if count == 100:
-                break
+            #count += 1
+            #if count == 100:
+            #    break
 
     with open(csv_file, 'w+', newline='') as file:
         writer = csv.writer(file)

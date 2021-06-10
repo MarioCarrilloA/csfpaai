@@ -1,5 +1,5 @@
 #!/bin/bash
-#20.07
+
 srun \
     -K --gpus=1 \
     --container-image=/netscratch/enroot/dlcc_pytorch_20.10.sqsh \
