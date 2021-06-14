@@ -1,36 +1,31 @@
+
+import csv
+import json
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+import os.path
+import pandas as pd
 import random
+import shutil
 import skimage.transform
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import random_split
 import torchvision
-import os.path
-import random
-import json
 
-#from keras.optimizers import SGD
 from matplotlib.pyplot import imshow
 from PIL import Image
-from torch.autograd import Variable
-from torch import topk
-from torchvision import models, datasets, transforms
-from sklearn.model_selection import train_test_split
-
-import os
-import shutil
-import csv
-from torchvision.utils import save_image
-
-
-import os
-import pandas as pd
 from skimage import io
+from sklearn.model_selection import train_test_split
+from torch import topk
+from torch.autograd import Variable
+from torch.utils.data import random_split
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
+from torchvision import models, datasets, transforms
+from torchvision.utils import save_image
 
 #####################################################################################################
 # Classes labels CIFAR-10
@@ -62,8 +57,6 @@ test_transform = transforms.Compose([
 ])
 
 #####################################################################################################
-
-
 
 class Model(torch.nn.Module):
     def __init__(self):
@@ -139,75 +132,6 @@ def collect_results(epochs, accuracy, train_loss, test_loss, classes_pcts, out):
         json_file.close()
 
 
-def plot_CIFAR10_results(out):
-    #TODO: Optimze this code
-    out_path = "charts/"
-    if os.path.isdir(out_path) == False:
-        os.makedirs(out_path)
-
-    file_name = out
-    data_file = []
-    if os.path.isfile(file_name) == True:
-        with open(file_name, 'r') as json_file:
-            data_file = json.load(json_file)
-            result_id = len(data_file) + 1
-            json_file.close()
-    else:
-        print("The file {} does not exist".format(file_name))
-
-    # Plot classes comparison
-    for c in range(len(classes)):
-        tmp = []
-        x =[]
-        i = 0
-        for r in data_file:
-            i+=1
-            tmp.append(r["classes_pcts"][c])
-            x.append("i" + str(i))
-        plt.clf()
-        plt.title("Class accuracy: " + classes[c])
-        plt.ylim([0,100])
-        plt.bar(x, tmp,  align='center', color='blue', width=0.4)
-        plt.ylabel("Percentage")
-        plt.xlabel("Iterations")
-        plt.savefig(out_path + classes[c]+".jpg", bbox_inches='tight')
-    ###################################################################
-    # Plot General accuracy
-    ##################################################################
-    acc = []
-    for r in data_file:
-        acc = r["accuracy"]
-    plt.clf()
-    plt.title("Model accuracy per iteration")
-    plt.ylim([0,100])
-    plt.bar(x, acc,  align='center', color='green', width=0.4)
-    plt.ylabel("Percentage")
-    plt.xlabel("Iterations")
-    plt.savefig(out_path + "model_accuracy.jpg", bbox_inches='tight')
-
-
-def plot_results(pct_correct, pct_classes):
-    ind = [x for x, _ in enumerate(classes)]
-
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(16, 4))
-    fig.suptitle('Accuracy results')
-
-    # Bar chart
-    ax[0].bar(ind, pct_classes, width=0.8, color='#00cc00')
-    ax[0].bar(ind, pct_classes, width=0.8, color='#00cc00')
-    ax[0].set_ylabel("Percentage")
-    ax[0].set_xlabel("Classes")
-    ax[0].set_xticks(ind)
-    ax[0].set_xticklabels(classes)
-    ax[0].set_title("Accuracy % per class - resnet18 and CIFAR10")
-
-    # Pie chart
-    ax[1].pie([100 - pct_correct, pct_correct], labels = ['Error ' + "{:.2f}".format(100 - pct_correct) +
-        '%', 'Accuracy ' + str(pct_correct) + '%'], colors=['red', '#00cc00'], startangle = 90)
-    ax[1].set_title("Accuracy model - resnet18 and CIFAR10")
-    plt.show()
-
-
 def train_model(model, train_loader, optimizer, epoch, verbose=False):
     model.train()
     total_loss = []
@@ -263,9 +187,6 @@ def get_one_random_sample(test_dataset):
         label = test_dataset.targets[random_index]
 
     return img, label
-
-
-
 
 
 def get_classes_percentage(targets, predictions):
@@ -431,7 +352,6 @@ def save_sample(original, cam, heat_map, crop, acc, tgt, predt, out):
     ax[3].imshow(np.transpose(crop.cpu(), (1, 2, 0)))
     ax[3].set_title("Cropped image")
     plt.savefig(out, bbox_inches='tight')
-    #plt.show()
 
 
 def save_random_samples(model_base, num_samples, crop_transformation, test_dataset, prefix=1):
@@ -449,9 +369,6 @@ def save_random_samples(model_base, num_samples, crop_transformation, test_datas
             acc, target, prediction, out)
 
 def create_new_dataset(dset, new_data, csv_file, crop_transformation):
-    #new_data = "newData/"
-    #csv_file = 'labels.csv'
-
     if os.path.isdir(new_data) == True:
         shutil.rmtree(new_data)
     os.makedirs(new_data)
@@ -508,5 +425,4 @@ def save_dataset_samples(train_loader, out):
         ax = fig.add_subplot(2, num_imgs_toshow/2, i + 1, xticks=[], yticks=[])
         plt.imshow(np.transpose(images[i], (1, 2, 0)))
     plt.savefig(out, bbox_inches='tight')
-
 
