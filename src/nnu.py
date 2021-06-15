@@ -9,6 +9,7 @@ import pandas as pd
 import random
 import shutil
 import skimage.transform
+import sys
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,6 +18,8 @@ import torchvision
 
 from matplotlib.pyplot import imshow
 from PIL import Image
+from sacred import Experiment
+from sacred.observers import file_storage
 from skimage import io
 from sklearn.model_selection import train_test_split
 from torch import topk
@@ -169,9 +172,7 @@ def compute_CAM(feature_conv, class_weights):
 def get_one_random_sample(test_dataset):
     if isinstance(test_dataset, croppedCIFAR10):
         num_total_imgs = len(test_dataset)
-        #print("TOTAL:", num_total_imgs)
         random_index = random.randint(1, num_total_imgs - 1)
-        #print("RANDOM:", random_index)
         imx = test_dataset[random_index][0]
         img = transforms.ToPILImage()(imx).convert("RGB")
         label = test_dataset[random_index][1]
@@ -248,10 +249,11 @@ def format_model_output(e, avg_loss, tloss, pct_correct, pct_classes):
 
     return output
 
-def build_model(train_loader, test_loader, e, model_file="PAAI21_CIFAR10_model.pt"):
-    # Hyperparameters
-    epochs=e
-    lr=0.1
+def build_model(train_loader,
+        test_loader,
+        epochs,
+        lr,
+        model_file="PAAI21_CIFAR10_model.pt"):
 
     model = Model()
     model = model.cuda()
@@ -278,7 +280,13 @@ def build_model(train_loader, test_loader, e, model_file="PAAI21_CIFAR10_model.p
 
     torch.save(model.state_dict(), model_file)
 
-    return model, pct_correct, pct_classes, train_loss, test_loss
+    metrics = {
+            "accuracy" : pct_correct,
+            "train_loss" : train_loss,
+            "test_loss" : test_loss,
+            "classes_pcts": pct_classes}
+
+    return model, metrics
 
 def get_heatmaps(tensor, model):
     prediction_var = Variable((tensor.unsqueeze(0)).cuda(), requires_grad=True)
@@ -391,6 +399,7 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation):
             save_image(cropped_image, image_path)
             row_list.append([image_name, label])
             i+=1
+
             #count += 1
             #if count == 100:
             #    break
@@ -403,6 +412,7 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation):
             image_path = new_data + image_name
             save_image(cropped_image, image_path)
             row_list.append([image_name, label])
+
             #count += 1
             #if count == 100:
             #    break
