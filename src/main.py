@@ -102,7 +102,7 @@ def main(
         train_dataset = croppedCIFAR10(
                         csv_file=csv_file,
                         root_dir=new_dataset_dir,
-                        transform=transforms.ToTensor()
+                        transform=train_transform
         )
         train_loader = torch.utils.data.DataLoader(
                         train_dataset,
@@ -117,5 +117,5 @@ def main(
         _run.log_scalar(1, metrics)
         save_dataset_samples(train_loader, out_img)
 
-        #if all(vp <= min_accuracy for vp in pct_classes):
-        #    break
+        if all(vp <= min_accuracy for vp in metrics['classes_pcts']):
+            break
