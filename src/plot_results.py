@@ -70,11 +70,12 @@ def plot_loss(data_file):
         epochs = len(train_loss)
         plt.clf()
         plt.title("Train and test loss - Iteration {}".format(i))
-        plt.plot(train_loss, color='red', label='Train loss')
-        plt.plot(test_loss, color='blue', label='Test loss')
+        plt.plot(train_loss, color='blue', label='Train loss')
+        plt.plot(test_loss, color='red', label='Test loss')
         plt.ylabel("Loss")
         plt.xlabel("Epochs")
         plt.xlim([0, epochs])
+        plt.legend()
         plt.savefig(out_path + img_name, bbox_inches='tight')
         i+=1
 
