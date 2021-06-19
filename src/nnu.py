@@ -30,6 +30,33 @@ from torch.utils.data import Subset
 from torchvision import models, datasets, transforms
 from torchvision.utils import save_image
 
+from datadings.writer import FileWriter
+
+
+import os
+import io
+import sys
+import numpy as np
+from multiprocessing import Lock
+
+import torch
+from torch.utils.data import Dataset
+from torchvision import transforms
+from torchvision import datasets
+
+# Use when decoding images from Datadings directly to PIL objects
+import PIL
+
+# Use when decoding images from Datadings directly to PIL objects (faster than PIL)
+import simplejpeg as sjpg
+
+
+# Check for Datadings support
+import datadings
+from datadings import reader as ddreader
+
+
+
 #####################################################################################################
 # Classes labels CIFAR-10
 classes = ('plane',
@@ -90,23 +117,37 @@ class LayerFeatures():
 
 
 class croppedCIFAR10(Dataset):
-    def __init__(self, csv_file, root_dir, transform=None):
-        self.annotations = pd.read_csv(csv_file)
-        self.root_dir = root_dir
+    def __init__(self,
+                 root,
+                 train=True,
+                 transform=None):
+        super().__init__()
+        split_to_load = 'train' if train else 'test'
+        feat_file = os.path.join(root, '{}.msgpack'.format(split_to_load))
+        self._reader = ddreader.MsgpackReader(feat_file)
+        self._iter = self._reader.rawiter(False)
+        self.size = len(self._reader)
         self.transform = transform
+        self.root = root
+        self.unpack_lock = Lock()
 
     def __len__(self):
-        return len(self.annotations)
+        return self.size
 
-    def __getitem__(self, index):
-        img_path = os.path.join(self.root_dir, self.annotations.iloc[index, 0])
-        image = io.imread(img_path)
-        y_label = torch.tensor(int(self.annotations.iloc[index, 1]))
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
 
+        with self.unpack_lock:
+            self._reader.seek(idx)
+            raw_sample = ddreader.msgpack.unpackb(next(self._iter))
+
+        x = raw_sample['image']
+        x = np.transpose(x, (1, 2, 0))
         if self.transform:
-            image = self.transform(image)
+            image = self.transform(x)
 
-        return (image, y_label)
+        return (image, raw_sample['label'])
 
 
 def collect_results(epochs, accuracy, train_loss, test_loss, classes_pcts, out):
@@ -379,33 +420,35 @@ def save_random_samples(model_base, num_samples, crop_transformation, test_datas
         save_sample(image, cam_img, heat_map, cropped_image,
             acc, target, prediction, out)
 
-def create_new_dataset(dset, new_data, csv_file, crop_transformation):
-    if os.path.isdir(new_data) == True:
-        shutil.rmtree(new_data)
-    os.makedirs(new_data)
 
-    if os.path.isfile(csv_file) == True:
-        os.remove(csv_file)
-
+def create_new_dataset(dset, new_data, csv_file, crop_transformation, train=True):
     row_list = []
     count = 0
+    out_type = 'train'
+    if train == False:
+        out_type = 'test'
+    i = 0
+    outfile = new_data + out_type + '.msgpack'
+    count = 0
+    writer = FileWriter(outfile, len(dset), overwrite=True)
 
     # For croppedCIFAR10 customized dataset
     if isinstance(dset, croppedCIFAR10):
-        i = 0
         for e in dset:
             image = e[0]
-            label = e[1].item()
+            label = e[1]
             cropped_image = crop_transformation(transforms.ToPILImage()(image).convert("RGB"))
             image_name = classes[label] + "_" + str(i) + ".png"
             image_path = new_data + image_name
-            save_image(cropped_image, image_path)
-            row_list.append([image_name, label])
+            PIL_image = cropped_image.cpu().detach().numpy()
+            sample = {"key": image_name, "image": PIL_image, "label": label}
+            writer.write(sample)
             i+=1
+            count += 1
+            if count == 100:
+                break
+        writer.close()
 
-            #count += 1
-            #if count == 100:
-            #    break
     else:
         for i in range(len(dset)):
             image = dset.dataset.data[i]
@@ -413,17 +456,14 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation):
             cropped_image = crop_transformation(image)
             image_name = classes[label] + "_" + str(i) + ".png"
             image_path = new_data + image_name
-            save_image(cropped_image, image_path)
-            row_list.append([image_name, label])
+            PIL_image = cropped_image.cpu().detach().numpy()
+            sample = {"key": image_name, "image": PIL_image, "label": label}
+            writer.write(sample)
+            count += 1
+            if count == 100:
+                break
+        writer.close()
 
-            #count += 1
-            #if count == 100:
-            #    break
-
-    with open(csv_file, 'w+', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerows(row_list)
-        file.close()
 
 def save_dataset_samples(train_loader, out):
     num_imgs_toshow= 10

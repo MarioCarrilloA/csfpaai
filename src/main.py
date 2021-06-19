@@ -68,17 +68,14 @@ def main(
                             shuffle=False
             )
             # Train model
-            print("Train base model...")
             prev_model, metrics = build_model(
                                 train_loader,
                                 test_loader,
                                 epochs,
                                 learning_rate
             )
-            print("Model has been trained successfully")
             #_run.log_scalar(1, metrics)
             save_dataset_samples(train_loader, out_img)
-            print("Save sampling images")
             continue
 
         # When the base model has been trained.
@@ -101,10 +98,8 @@ def main(
                 csv_file,
                 crop_transformation
         )
-        print("New dataset created successfully!")
         train_dataset = croppedCIFAR10(
-                        csv_file=csv_file,
-                        root_dir=new_dataset_dir,
+                        root=new_dataset_dir,
                         transform=train_transform
         )
         train_loader = torch.utils.data.DataLoader(
