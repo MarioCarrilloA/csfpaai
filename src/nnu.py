@@ -205,7 +205,10 @@ def get_classes_percentage(targets, predictions):
         total_per_class[class_id] += 1
 
     for i in range(num_classes):
-        percentage_per_class[i] = 100 * (correct_per_class[i] / total_per_class[i])
+        if total_per_class[i] == 0:
+            percentage_per_class[i] = 0
+        else:
+            percentage_per_class[i] = 100 * (correct_per_class[i] / total_per_class[i])
 
     return percentage_per_class
 

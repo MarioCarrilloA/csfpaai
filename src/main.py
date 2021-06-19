@@ -1,31 +1,38 @@
 from nnu import *
 
-exp = Experiment('PAAL Experiment')
-EXP_FOLDER = '../exp/'
-log_location = os.path.join(EXP_FOLDER, os.path.basename(sys.argv[0])[:-3])
-if len(exp.observers) == 0:
-    print('Adding a file observer in %s' % log_location)
-    exp.observers.append(file_storage.FileStorageObserver.create(log_location))
+#exp = Experiment('PAAL Experiment')
+#EXP_FOLDER = '../exp/'
+#log_location = os.path.join(EXP_FOLDER, os.path.basename(sys.argv[0])[:-3])
+#if len(exp.observers) == 0:
+#    print('Adding a file observer in %s' % log_location)
+#    exp.observers.append(file_storage.FileStorageObserver.create(log_location))
+#
 
+#@exp.config
+#def config():
+#    max_iterations = 20
+#    epochs = 50
+#    learning_rate = 0.1
+#    min_accuracy = 30
+#    num_samples = 5
+#
 
-@exp.config
-def config():
+#@exp.automain
+#def main(
+#    _run,
+#    max_iterations,
+#    epochs,
+#    learning_rate,
+#    min_accuracy,
+#    num_samples
+#):
+#
+def main():
     max_iterations = 20
     epochs = 50
     learning_rate = 0.1
     min_accuracy = 30
     num_samples = 5
-
-
-@exp.automain
-def main(
-    _run,
-    max_iterations,
-    epochs,
-    learning_rate,
-    min_accuracy,
-    num_samples
-):
 
     # Download & transform CIFAR-10 datasets
     train_full_dataset = datasets.CIFAR10(
@@ -69,14 +76,17 @@ def main(
                             shuffle=False
             )
             # Train model
+            print("Train base model...")
             prev_model, metrics = build_model(
                                 train_loader,
                                 test_loader,
                                 epochs,
                                 learning_rate
             )
-            _run.log_scalar(1, metrics)
+            print("Model has been trained successfully")
+            #_run.log_scalar(1, metrics)
             save_dataset_samples(train_loader, out_img)
+            print("Save sampling images")
             continue
 
         # When the base model has been trained.
@@ -99,6 +109,7 @@ def main(
                 csv_file,
                 crop_transformation
         )
+        print("New dataset created successfully!")
         train_dataset = croppedCIFAR10(
                         csv_file=csv_file,
                         root_dir=new_dataset_dir,
@@ -114,8 +125,10 @@ def main(
                             test_loader,
                             epochs,
                             learning_rate)
-        _run.log_scalar(1, metrics)
+        #_run.log_scalar(1, metrics)
         save_dataset_samples(train_loader, out_img)
 
         if all(vp <= min_accuracy for vp in metrics['classes_pcts']):
             break
+
+main()
