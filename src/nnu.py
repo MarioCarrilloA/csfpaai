@@ -150,7 +150,7 @@ class croppedCIFAR10(Dataset):
         return (image, raw_sample['label'])
 
 
-def collect_results(epochs, accuracy, train_loss, test_loss, classes_pcts, out):
+def collect_results(res, out):
     file_name = out
     data_file = []
     result_id = 0
@@ -162,14 +162,6 @@ def collect_results(epochs, accuracy, train_loss, test_loss, classes_pcts, out):
     else:
         result_id = 1
 
-    res = {
-        "result_id" : result_id,
-        "epochs" : epochs,
-        "accuracy" : accuracy,
-        "train_loss" : train_loss,
-        "test_loss" : test_loss,
-        "classes_pcts": classes_pcts
-    }
     data_file.append(res)
     with open(file_name, 'w') as json_file:
         json.dump(data_file, json_file, ensure_ascii=True, indent=4)

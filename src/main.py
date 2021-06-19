@@ -48,11 +48,12 @@ def main(
             [train_num_samples, val_num_samples]
     )
     prev_model = None
+    out_filename = "../res/results.json"
     for itr in range(max_iterations):
         print("Iteration: ", itr)
         new_dataset_dir = "data_{}/".format(itr)
         csv_file = 'labels_{}.csv'.format(itr)
-        out_img = "dataset_samples_{}.png".format(itr)
+        out_img = "../res/dataset_samples_{}.png".format(itr)
 
         # Compute base
         if itr == 0:
@@ -75,6 +76,7 @@ def main(
                                 learning_rate
             )
             #_run.log_scalar(1, metrics)
+            collect_results(metrics, out_filename)
             save_dataset_samples(train_loader, out_img)
             continue
 
@@ -113,6 +115,7 @@ def main(
                             epochs,
                             learning_rate)
         #_run.log_scalar(1, metrics)
+        collect_results(metrics, out_filename)
         save_dataset_samples(train_loader, out_img)
 
         if all(vp <= min_accuracy for vp in metrics['classes_pcts']):
