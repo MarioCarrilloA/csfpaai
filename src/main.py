@@ -1,38 +1,30 @@
 from nnu import *
 
-#exp = Experiment('PAAL Experiment')
-#EXP_FOLDER = '../exp/'
-#log_location = os.path.join(EXP_FOLDER, os.path.basename(sys.argv[0])[:-3])
-#if len(exp.observers) == 0:
-#    print('Adding a file observer in %s' % log_location)
-#    exp.observers.append(file_storage.FileStorageObserver.create(log_location))
-#
+exp = Experiment('PAAL Experiment')
+EXP_FOLDER = '../exp/'
+log_location = os.path.join(EXP_FOLDER, os.path.basename(sys.argv[0])[:-3])
+if len(exp.observers) == 0:
+    print('Adding a file observer in %s' % log_location)
+    exp.observers.append(file_storage.FileStorageObserver.create(log_location))
 
-#@exp.config
-#def config():
-#    max_iterations = 20
-#    epochs = 50
-#    learning_rate = 0.1
-#    min_accuracy = 30
-#    num_samples = 5
-#
 
-#@exp.automain
-#def main(
-#    _run,
-#    max_iterations,
-#    epochs,
-#    learning_rate,
-#    min_accuracy,
-#    num_samples
-#):
-#
-def main():
+@exp.config
+def config():
     max_iterations = 20
     epochs = 50
     learning_rate = 0.1
     min_accuracy = 30
     num_samples = 5
+
+
+@exp.automain
+def main(
+    max_iterations,
+    epochs,
+    learning_rate,
+    min_accuracy,
+    num_samples
+):
 
     # Download & transform CIFAR-10 datasets
     train_full_dataset = datasets.CIFAR10(
@@ -130,5 +122,3 @@ def main():
 
         if all(vp <= min_accuracy for vp in metrics['classes_pcts']):
             break
-
-main()
