@@ -51,6 +51,7 @@ def main(
     out_filename = "../res/results.json"
     for itr in range(max_iterations):
         print("Iteration: ", itr)
+        cropped_pixels = []
         new_dataset_dir = "data_{}/".format(itr)
         csv_file = 'labels_{}.csv'.format(itr)
         out_img = "../res/dataset_samples_{}.png".format(itr)
@@ -76,6 +77,7 @@ def main(
                                 learning_rate
             )
             #_run.log_scalar(1, metrics)
+            metrics.update({'avg_cropped_pixels': 0})
             collect_results(metrics, out_filename)
             save_dataset_samples(train_loader, out_img)
             continue
@@ -84,7 +86,7 @@ def main(
         ######################################################################
         crop_transformation = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Lambda(lambda x: crop_preprocess(x, prev_model))])
+            transforms.Lambda(lambda x: crop_preprocess(x, prev_model, cropped_pixels))])
 
         save_random_samples(
                 prev_model,
@@ -124,6 +126,8 @@ def main(
                             epochs,
                             learning_rate)
         #_run.log_scalar(1, metrics)
+        avg_cpix = sum(cropped_pixels) / len(cropped_pixels)
+        metrics.update({'avg_cropped_pixels': avg_cpix})
         collect_results(metrics, out_filename)
         save_dataset_samples(train_loader, out_img)
 
