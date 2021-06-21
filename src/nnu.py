@@ -437,8 +437,8 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation, train=True
             writer.write(sample)
             i+=1
             count += 1
-            if count == 100:
-                break
+            #if count == 100:
+            #    break
         writer.close()
 
     else:
@@ -452,8 +452,8 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation, train=True
             sample = {"key": image_name, "image": PIL_image, "label": label}
             writer.write(sample)
             count += 1
-            if count == 100:
-                break
+            #if count == 100:
+            #    break
         writer.close()
 
 

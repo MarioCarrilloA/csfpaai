@@ -81,6 +81,7 @@ def main(
             continue
 
         # When the base model has been trained.
+        ######################################################################
         crop_transformation = transforms.Compose([
             transforms.ToTensor(),
             transforms.Lambda(lambda x: crop_preprocess(x, prev_model))])
@@ -93,7 +94,15 @@ def main(
                 itr
         )
         print("Creating new data set...")
-        # This line creates a dir and dump all new PNG files
+        # This line is to avoid saving the images with the transformations
+        # used for data augmentation.
+        if isinstance(train_dataset, croppedCIFAR10):
+            train_dataset.transform = transforms.ToTensor()
+        else:
+            train_dataset.dataset.transform = transforms.ToTensor()
+
+
+        # Prepare dataset and loaders for new iteration
         create_new_dataset(
                 train_dataset,
                 new_dataset_dir,
