@@ -98,7 +98,7 @@ def plot_avg_cropped_px(data_file):
 
     # Labels above bars
     for i, v in enumerate(croppx):
-        plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
+        plt.text(i - 0.20, v + 1, str(round(v, 2)) + "px")
     plt.savefig(out_path + "avg_cropped_pixels.jpg", bbox_inches='tight')
 
 
