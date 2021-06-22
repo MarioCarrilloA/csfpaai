@@ -131,5 +131,5 @@ def main(
         collect_results(metrics, out_filename)
         save_dataset_samples(train_loader, out_img)
 
-        if all(vp <= min_accuracy for vp in metrics['classes_pcts']):
+        if all(vp <= min_accuracy for vp in metrics['testds_classes_pcts']):
             break

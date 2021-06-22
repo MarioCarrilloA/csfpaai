@@ -24,7 +24,7 @@ def plot_classes_results(data_file):
         i = 0
         for r in data_file:
             i+=1
-            tmp.append(r["classes_pcts"][c])
+            tmp.append(r['testds_classes_pcts'][c])
             x.append("i" + str(i))
         plt.clf()
         plt.title("Class accuracy: " + classes[c], fontsize=15)
@@ -46,7 +46,7 @@ def plot_model_accuracy(data_file):
     i = 0
     for r in data_file:
         i+=1
-        acc.append(r["accuracy"])
+        acc.append(r['testds_accuracy'])
         x.append("i" + str(i))
     rgb = (random.random(), random.random(), random.random())
     plt.clf()
@@ -66,8 +66,8 @@ def plot_loss(data_file):
     i = 0
     for r in data_file:
         img_name = "loss_iteration_{}.png".format(i)
-        train_loss = r['train_loss']
-        test_loss = r['test_loss']
+        train_loss = r['train_model_loss']
+        test_loss = r['testds_loss']
         epochs = len(train_loss)
         plt.clf()
         plt.title("Train and test loss - Iteration {}".format(i))
