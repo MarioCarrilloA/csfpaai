@@ -79,6 +79,28 @@ def plot_loss(data_file):
         plt.savefig(out_path + img_name, bbox_inches='tight')
         i+=1
 
+def plot_avg_cropped_px(data_file):
+    croppx = []
+    x =[]
+    i = 0
+    for r in data_file:
+        i+=1
+        croppx.append(r['avg_cropped_pixels'])
+        x.append("i" + str(i))
+    plt.clf()
+    plt.title("Average cropped pixels")
+    #plt.ylim([0,100])
+    rgb = (random.random(), random.random(), random.random())
+    plt.bar(x, croppx,  align='center', color=[rgb], width=0.4)
+    plt.ylabel("Average number of cropped pixels")
+    plt.xlabel("Iterations")
+
+    # Labels above bars
+    for i, v in enumerate(croppx):
+        plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
+    plt.savefig(out_path + "avg_cropped_pixels.jpg", bbox_inches='tight')
+
+
 def main():
     if len(sys.argv) <= 1:
         print("error: no input file")
@@ -101,6 +123,7 @@ def main():
     plot_model_accuracy(data_file)
     plot_classes_results(data_file)
     plot_loss(data_file)
+    plot_avg_cropped_px(data_file)
     print("Done!")
 
 if __name__ == "__main__":
