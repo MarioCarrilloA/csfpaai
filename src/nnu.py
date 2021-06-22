@@ -225,12 +225,12 @@ def get_classes_percentage(targets, predictions):
     return percentage_per_class
 
 
-def test_model(model, test_loader, verbose=False):
+def test_model(model, dataset_loader, verbose=False):
     model.eval()
     loss = 0
     correct = 0
 
-    for data, target in test_loader:
+    for data, target in dataset_loader:
         with torch.no_grad():
             data = data.cuda()
             target = target.cuda()
@@ -241,22 +241,22 @@ def test_model(model, test_loader, verbose=False):
             prediction = prediction.max(1)[1]
             correct += prediction.eq(target.view_as(prediction)).sum().item()
 
-            loss /= len(test_loader.dataset)
-            percentage_correct = 100.0 * correct / len(test_loader.dataset)
+            loss /= len(dataset_loader.dataset)
+            percentage_correct = 100.0 * correct / len(dataset_loader.dataset)
             percentage_classes = get_classes_percentage(target, prediction)
 
             if (verbose):
                 print("Testing set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)".format(
-                    loss, correct, len(test_loader.dataset), percentage_correct))
+                    loss, correct, len(dataset_loader.dataset), percentage_correct))
 
     return loss, percentage_correct, percentage_classes
 
 
-def format_model_output(e, avg_loss, tloss, pct_correct, pct_classes):
+def format_model_output(e, avg_loss, tloss, testds_acc, pct_classes):
     output  = "Epoch:{: <2} ".format(e)
     output += "TrainLoss:{: <4.2f} ".format(avg_loss)
     output += "TestLoss:{: <4.2f} ".format(tloss)
-    output += "Accuracy:{: <5.2f}% ".format(pct_correct)
+    output += "Accuracy:{: <5.2f}% ".format(testds_acc)
 
     num_classes = len(classes)
     for i in range(num_classes):
@@ -285,8 +285,8 @@ def build_model(train_loader,
     print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
-        loss, pct_correct, pct_classes = test_model(model, test_loader)
-        output = format_model_output(epoch, avg_loss, loss, pct_correct, pct_classes)
+        loss, testds_acc, pct_classes = test_model(model, test_loader)
+        output = format_model_output(epoch, avg_loss, loss, testds_acc, pct_classes)
         train_loss.append(avg_loss)
         test_loss.append(loss.item())
         print(output)
@@ -296,7 +296,7 @@ def build_model(train_loader,
     torch.save(model.state_dict(), model_file)
 
     metrics = {
-            "accuracy" : pct_correct,
+            "testds_accuracy" : testds_acc,
             "train_loss" : train_loss,
             "test_loss" : test_loss,
             "classes_pcts": pct_classes}
