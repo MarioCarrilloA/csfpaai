@@ -48,10 +48,11 @@ def plot_model_accuracy(data_file):
         i+=1
         acc.append(r["accuracy"])
         x.append("i" + str(i))
+    rgb = (random.random(), random.random(), random.random())
     plt.clf()
     plt.title("Model accuracy per iteration")
     plt.ylim([0,100])
-    plt.bar(x, acc,  align='center', color='green', width=0.4)
+    plt.bar(x, acc,  align='center', color=[rgb], width=0.4)
     plt.ylabel("Percentage")
     plt.xlabel("Iterations")
 
