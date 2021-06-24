@@ -17,17 +17,28 @@ classes = ('plane',
            'truck')
 out_path = "charts/"
 
-def plot_classes_results(data_file):
+def plot_classes_results(data_file, dataset_type):
+    dataset_key = ''
+    if dataset_type == 'test':
+        dataset_key = 'testds_classes_pcts'
+    else:
+        dataset_key = 'trainds_classes_pcts'
+
+    if dataset_key in data_file == False:
+        print("error: {} key no found")
+        return False
+
     for c in range(len(classes)):
         tmp = []
         x =[]
         i = 0
         for r in data_file:
             i+=1
-            tmp.append(r['testds_classes_pcts'][c])
+            tmp.append(r[dataset_key][c])
             x.append("i" + str(i))
         plt.clf()
-        plt.title("Class accuracy: " + classes[c], fontsize=15)
+        plt.title("Using *{}* dataset - Class accuracy: ".format(dataset_type) +
+                classes[c] + "\n", fontsize=15)
         plt.ylim([0,100])
         rgb = (random.random(), random.random(), random.random())
         plt.bar(x, tmp,  align='center', color=[rgb], width=0.4)
@@ -37,20 +48,32 @@ def plot_classes_results(data_file):
         # Labels above bars
         for i, v in enumerate(tmp):
             plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
-        plt.savefig(out_path + classes[c]+".jpg", bbox_inches='tight')
+        plt.savefig(out_path + "{}_".format(dataset_type) +
+                classes[c] + ".jpg", bbox_inches='tight')
 
 
-def plot_model_accuracy(data_file):
+def plot_model_accuracy(data_file, dataset_type):
+    dataset_key = ''
+    if dataset_type == 'test':
+        dataset_key = 'testds_accuracy'
+    else:
+        dataset_key = 'trainds_accuracy'
+
+    if dataset_key in data_file == False:
+        print("error: {} key no found")
+        return False
+
     acc = []
     x =[]
     i = 0
     for r in data_file:
         i+=1
-        acc.append(r['testds_accuracy'])
+        acc.append(r[dataset_key])
         x.append("i" + str(i))
     rgb = (random.random(), random.random(), random.random())
     plt.clf()
-    plt.title("Model accuracy per iteration")
+    plt.title("Model accuracy per iteration " +
+            "using *{}* dataset for testing".format(dataset_type) + "\n")
     plt.ylim([0,100])
     plt.bar(x, acc,  align='center', color=[rgb], width=0.4)
     plt.ylabel("Percentage")
@@ -59,25 +82,37 @@ def plot_model_accuracy(data_file):
     # Labels above bars
     for i, v in enumerate(acc):
         plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
-    plt.savefig(out_path + "model_accuracy.jpg", bbox_inches='tight')
+    plt.savefig(out_path + "{}_".format(dataset_type) +
+            "model_accuracy.jpg", bbox_inches='tight')
 
 
-def plot_loss(data_file):
+def plot_loss(data_file, dataset_type):
+    dataset_key = ''
+    if dataset_type == 'test':
+        dataset_key = 'testds_loss'
+    else:
+        dataset_key = 'trainds_loss'
+
+    if dataset_key in data_file == False:
+        print("error: {} key no found")
+        return False
     i = 0
     for r in data_file:
         img_name = "loss_iteration_{}.png".format(i)
         train_loss = r['train_model_loss']
-        test_loss = r['testds_loss']
+        test_loss = r[dataset_key]
         epochs = len(train_loss)
         plt.clf()
-        plt.title("Train and test loss - Iteration {}".format(i))
+        plt.title("Train and test loss (with *{}* datset) ".format(dataset_type) +
+            "- Iteration {}\n".format(i))
         plt.plot(train_loss, color='blue', label='Train loss')
         plt.plot(test_loss, color='red', label='Test loss')
         plt.ylabel("Loss")
         plt.xlabel("Epochs")
         plt.xlim([0, epochs])
         plt.legend()
-        plt.savefig(out_path + img_name, bbox_inches='tight')
+        plt.savefig(out_path + "{}_".format(dataset_type) +
+                img_name, bbox_inches='tight')
         i+=1
 
 def plot_avg_cropped_px(data_file):
@@ -121,10 +156,16 @@ def main():
         print("The file {} does not exist".format(input_file))
 
     print("plotting...")
-    plot_model_accuracy(data_file)
-    plot_classes_results(data_file)
-    plot_loss(data_file)
+    dataset_type = 'test'
+    plot_model_accuracy(data_file, dataset_type)
+    plot_classes_results(data_file, dataset_type)
+    plot_loss(data_file, dataset_type)
     plot_avg_cropped_px(data_file)
+
+    dataset_type = 'train'
+    plot_model_accuracy(data_file, dataset_type)
+    plot_classes_results(data_file, dataset_type)
+    plot_loss(data_file, dataset_type)
     print("Done!")
 
 if __name__ == "__main__":
