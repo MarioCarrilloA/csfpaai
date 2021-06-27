@@ -95,7 +95,7 @@ def main(
                 train_dataset,
                 itr
         )
-        print("Creating new data set...")
+
         # This line is to avoid saving the images with the transformations
         # used for data augmentation.
         if isinstance(train_dataset, croppedCIFAR10):
@@ -103,13 +103,24 @@ def main(
         else:
             train_dataset.dataset.transform = None
 
-
         # Prepare dataset and loaders for new iteration
+        print("Create new TRAIN dataset...")
         create_new_dataset(
                 train_dataset,
                 new_dataset_dir,
                 crop_transformation
         )
+        print("Creating new TEST dataset")
+        test_dataset.transform = None
+        create_new_dataset(
+                test_dataset,
+                new_dataset_dir,
+                crop_transformation,
+                train=False
+        )
+        test_dataset.transform = transforms.ToTensor()
+
+
         train_dataset = croppedCIFAR10(
                         root=new_dataset_dir,
                         transform=train_transform
