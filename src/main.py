@@ -53,7 +53,7 @@ def main(
         print("Iteration: ", itr)
         cropped_pixels = []
         new_dataset_dir = "data_{}/".format(itr)
-        csv_file = 'labels_{}.csv'.format(itr)
+        #csv_file = 'labels_{}.csv'.format(itr)
         out_img = "../res/dataset_samples_{}.png".format(itr)
 
         # Compute base
@@ -108,7 +108,6 @@ def main(
         create_new_dataset(
                 train_dataset,
                 new_dataset_dir,
-                csv_file,
                 crop_transformation
         )
         train_dataset = croppedCIFAR10(

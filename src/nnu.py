@@ -411,7 +411,7 @@ def save_random_samples(model_base, num_samples, crop_transformation, test_datas
             acc, target, prediction, out)
 
 
-def create_new_dataset(dset, new_data, csv_file, crop_transformation, train=True):
+def create_new_dataset(dset, new_data, crop_transformation, train=True):
     row_list = []
     count = 0
     out_type = 'train'
