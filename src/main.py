@@ -99,9 +99,9 @@ def main(
         # This line is to avoid saving the images with the transformations
         # used for data augmentation.
         if isinstance(train_dataset, croppedCIFAR10):
-            train_dataset.transform = transforms.ToTensor()
+            train_dataset.transform = None
         else:
-            train_dataset.dataset.transform = transforms.ToTensor()
+            train_dataset.dataset.transform = None
 
 
         # Prepare dataset and loaders for new iteration

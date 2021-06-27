@@ -19,6 +19,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torchvision
 
+from datadings.sets import ImageClassificationData
 from datadings.writer import FileWriter
 from datadings import reader as ddreader
 from matplotlib.pyplot import imshow
@@ -26,7 +27,7 @@ from multiprocessing import Lock
 from PIL import Image
 from sacred import Experiment
 from sacred.observers import file_storage
-from skimage import io
+#from skimage import io
 from sklearn.model_selection import train_test_split
 from torch import topk
 from torch.autograd import Variable
@@ -35,7 +36,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import Subset
 from torchvision import models, datasets, transforms
 from torchvision.utils import save_image
-
+from tqdm import tqdm
 
 # Classes labels CIFAR-10
 classes = ('plane',
@@ -100,6 +101,7 @@ class croppedCIFAR10(Dataset):
                  root,
                  train=True,
                  transform=None):
+
         super().__init__()
         split_to_load = 'train' if train else 'test'
         feat_file = os.path.join(root, '{}.msgpack'.format(split_to_load))
@@ -121,12 +123,16 @@ class croppedCIFAR10(Dataset):
             self._reader.seek(idx)
             raw_sample = ddreader.msgpack.unpackb(next(self._iter))
 
-        x = raw_sample['image']
-        x = np.transpose(x, (1, 2, 0))
-        if self.transform:
-            image = self.transform(x)
+        # Decode image
+        bytes_buf = io.BytesIO(raw_sample['image'])
+        im = PIL.Image.open(bytes_buf)
+        if im.mode != 'RGB':
+            im = im.convert('RGB')
 
-        return (image, raw_sample['label'])
+        if self.transform:
+            im = self.transform(im)
+
+        return im, raw_sample['label']
 
 
 def collect_results(res, out):
@@ -282,13 +288,16 @@ def build_model(train_loader,
 
     train_model_loss = []
     testds_loss = []
+    trainds_loss = []
     print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
         testdsL, testds_acc, testds_pcts = test_model(model, test_loader)
+        #traindsL, trainds_acc, trainds_pcts = test_model(model, train_loader)
         output = format_model_output(epoch, avg_loss, testdsL, testds_acc, testds_pcts)
         train_model_loss.append(avg_loss)
         testds_loss.append(testdsL.item())
+        #trainds_loss.append(traindsL.item())
         print(output)
 
         scheduler.step()
@@ -299,7 +308,11 @@ def build_model(train_loader,
             "train_model_loss" : train_model_loss,
             "testds_accuracy" : testds_acc,
             "testds_loss" : testds_loss,
-            "testds_classes_pcts": testds_pcts}
+            "testds_classes_pcts": testds_pcts,
+            #"trainds_accuracy" : trainds_acc,
+            #"trainds_loss" : trainds_loss,
+            #"trainds_classes_pcts" : trainds_pcts
+    }
 
     return model, metrics
 
@@ -409,37 +422,18 @@ def create_new_dataset(dset, new_data, csv_file, crop_transformation, train=True
     count = 0
     writer = FileWriter(outfile, len(dset), overwrite=True)
 
-    # For croppedCIFAR10 customized dataset
-    if isinstance(dset, croppedCIFAR10):
-        for e in dset:
-            image = e[0]
-            label = e[1]
-            cropped_image = crop_transformation(transforms.ToPILImage()(image).convert("RGB"))
-            image_name = classes[label] + "_" + str(i) + ".png"
-            image_path = new_data + image_name
-            PIL_image = cropped_image.cpu().detach().numpy()
-            sample = {"key": image_name, "image": PIL_image, "label": label}
-            writer.write(sample)
-            i+=1
-            count += 1
-            #if count == 100:
-            #    break
-        writer.close()
-
-    else:
-        for i in range(len(dset)):
-            image = dset.dataset.data[i]
-            label = dset.dataset.targets[i]
-            cropped_image = crop_transformation(image)
-            image_name = classes[label] + "_" + str(i) + ".png"
-            image_path = new_data + image_name
-            PIL_image = cropped_image.cpu().detach().numpy()
-            sample = {"key": image_name, "image": PIL_image, "label": label}
-            writer.write(sample)
-            count += 1
-            #if count == 100:
-            #    break
-        writer.close()
+    lbls = set()
+    for n, (data, label) in tqdm(enumerate(dset), ascii=True, ncols=100):
+        data = crop_transformation(data)
+        data = transforms.ToPILImage()(data).convert("RGB")
+        bio = io.BytesIO()
+        data.save(bio, 'PNG')
+        image = bio.getvalue()
+        writer.write(ImageClassificationData(f'{n:05d}', image, int(label)))
+        lbls.update([label])
+        if n == 100:
+            break
+    writer.close()
 
 
 def save_dataset_samples(train_loader, out):
