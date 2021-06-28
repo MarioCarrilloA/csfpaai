@@ -54,8 +54,8 @@ def main(
         print("Iteration: ", itr)
         cropped_pixels = []
         new_dataset_dir = "data_{}/".format(itr)
-        #csv_file = 'labels_{}.csv'.format(itr)
         out_img = "../res/dataset_samples_{}.png".format(itr)
+        ext_out_img = "../res/ctestds_dataset_samples_{}.png".format(itr)
 
         # Compute base
         if itr == 0:
@@ -70,7 +70,7 @@ def main(
                             batch_size=5000,
                             shuffle=False
             )
-            test_transformed_loader = train_loader
+            test_transformed_loader = test_loader
             # Train model
             prev_model, metrics = build_model(
                                 train_loader,
@@ -83,6 +83,7 @@ def main(
             metrics.update({'avg_cropped_pixels': 0})
             collect_results(metrics, out_filename)
             save_dataset_samples(train_loader, out_img)
+            save_dataset_samples(test_transformed_loader, ext_out_img)
             continue
 
         # When the base model has been trained.
@@ -136,7 +137,7 @@ def main(
 
         test_transformed_dataset = croppedCIFAR10(
                         root=new_dataset_dir,
-                        transform=train_transform,
+                        transform=test_transform,
                         train=False
         )
         test_transformed_loader = torch.utils.data.DataLoader(
@@ -158,6 +159,7 @@ def main(
         metrics.update({'avg_cropped_pixels': avg_cpix})
         collect_results(metrics, out_filename)
         save_dataset_samples(train_loader, out_img)
+        save_dataset_samples(test_transformed_loader, ext_out_img)
 
         if all(vp <= min_accuracy for vp in metrics['testds_classes_pcts']):
             break

@@ -446,9 +446,9 @@ def create_new_dataset(dset, new_data, crop_transformation, train=True):
     writer.close()
 
 
-def save_dataset_samples(train_loader, out):
+def save_dataset_samples(loader, out):
     num_imgs_toshow= 10
-    data_iter = iter(train_loader)
+    data_iter = iter(loader)
     images, labels = data_iter.next()
     # convert images to numpy for display
     images = images.cpu().numpy()
