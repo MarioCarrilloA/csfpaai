@@ -270,10 +270,12 @@ def format_model_output(e, avg_loss, tloss, testds_acc, pct_classes):
 
     return output
 
-def build_model(train_loader,
+def build_model(
+        train_loader,
         test_loader,
         epochs,
         lr,
+        extra_loader,
         model_file="PAAI21_CIFAR10_model.pt"):
 
     model = Model()
@@ -288,15 +290,20 @@ def build_model(train_loader,
 
     train_model_loss = []
     testds_loss = []
+    testdsT_loss = []
     trainds_loss = []
-    print("Start train/test resnet18!")
+    print("Start train/test resnet18!", type(extra_loader))
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
         testdsL, testds_acc, testds_pcts = test_model(model, test_loader)
+        testdsT, testdsT_acc, testdsT_pcts = test_model(model, extra_loader)
         #traindsL, trainds_acc, trainds_pcts = test_model(model, train_loader)
+
+        # Collect results
         output = format_model_output(epoch, avg_loss, testdsL, testds_acc, testds_pcts)
         train_model_loss.append(avg_loss)
         testds_loss.append(testdsL.item())
+        testdsT_loss.append(testdsT.item())
         #trainds_loss.append(traindsL.item())
         print(output)
 
@@ -309,6 +316,9 @@ def build_model(train_loader,
             "testds_accuracy" : testds_acc,
             "testds_loss" : testds_loss,
             "testds_classes_pcts": testds_pcts,
+            "testds_accuracy_ext" : testdsT_acc,
+            "testds_loss_ext" : testdsT_loss,
+            "testds_classes_pcts_ext" : testdsT_pcts
             #"trainds_accuracy" : trainds_acc,
             #"trainds_loss" : trainds_loss,
             #"trainds_classes_pcts" : trainds_pcts
@@ -431,8 +441,8 @@ def create_new_dataset(dset, new_data, crop_transformation, train=True):
         image = bio.getvalue()
         writer.write(ImageClassificationData(f'{n:05d}', image, int(label)))
         lbls.update([label])
-        if n == 100:
-            break
+        #if n == 100:
+        #    break
     writer.close()
 
 

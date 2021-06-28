@@ -40,6 +40,7 @@ def main(
                     download=True
     )
 
+    test_transformed_dataset = test_dataset
     # Split datasets in 90% for training set and 10% for Validation set.
     train_num_samples = int(len(train_full_dataset) * 0.9)
     val_num_samples = int(len(train_full_dataset) * 0.1)
@@ -69,12 +70,14 @@ def main(
                             batch_size=5000,
                             shuffle=False
             )
+            test_transformed_loader = train_loader
             # Train model
             prev_model, metrics = build_model(
                                 train_loader,
                                 test_loader,
                                 epochs,
-                                learning_rate
+                                learning_rate,
+                                test_transformed_loader
             )
             #_run.log_scalar(1, metrics)
             metrics.update({'avg_cropped_pixels': 0})
@@ -111,14 +114,14 @@ def main(
                 crop_transformation
         )
         print("Creating new TEST dataset")
-        test_dataset.transform = None
+        test_transformed_dataset.transform = None
         create_new_dataset(
-                test_dataset,
+                test_transformed_dataset,
                 new_dataset_dir,
                 crop_transformation,
                 train=False
         )
-        test_dataset.transform = transforms.ToTensor()
+        test_transformed_dataset.transform = transforms.ToTensor()
 
 
         train_dataset = croppedCIFAR10(
@@ -130,11 +133,26 @@ def main(
                         batch_size=128,
                         shuffle=True
         )
+
+        test_transformed_dataset = croppedCIFAR10(
+                        root=new_dataset_dir,
+                        transform=train_transform,
+                        train=False
+        )
+        test_transformed_loader = torch.utils.data.DataLoader(
+                        test_transformed_dataset,
+                        batch_size=5000,
+                        shuffle=False
+        )
+
         prev_model, metrics = build_model(
                             train_loader,
                             test_loader,
                             epochs,
-                            learning_rate)
+                            learning_rate,
+                            test_transformed_loader,
+        )
+
         #_run.log_scalar(1, metrics)
         avg_cpix = sum(cropped_pixels) / len(cropped_pixels)
         metrics.update({'avg_cropped_pixels': avg_cpix})
