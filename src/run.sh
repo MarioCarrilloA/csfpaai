@@ -3,7 +3,7 @@
 GPU_BOARD="GTX1080Ti"
 GPU_NUM=1
 MYSELF=${0##*/}:w
-
+MEMORY="50GB"
 
 function help()
 {
@@ -28,7 +28,7 @@ if [ $# -eq 0 ]; then
     srun \
         -K --gpus=$GPU_NUM \
         -p "$GPU_BOARD" \
-        --mem=50GB \
+        --mem="$MEMORY" \
         --container-image=/netscratch/enroot/dlcc_pytorch_20.10.sqsh \
         --container-workdir="$(pwd)" \
         --container-mounts=/netscratch/$USER:/netscratch/$USER,/ds:/ds:ro,"$(pwd)":"$(pwd)" \
@@ -59,7 +59,7 @@ else
             srun \
                 -K --gpus=$GPU_NUM \
                 -p "$GPU_BOARD" \
-                --mem=50GB \
+                --mem="$MEMORY" \
                 --container-image=/netscratch/enroot/dlcc_pytorch_20.10.sqsh \
                 --container-workdir="$(pwd)" \
                 --container-mounts=/netscratch/$USER:/netscratch/$USER,/ds:/ds:ro,"$(pwd)":"$(pwd)" \
