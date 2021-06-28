@@ -21,8 +21,10 @@ def plot_classes_results(data_file, dataset_type):
     dataset_key = ''
     if dataset_type == 'test':
         dataset_key = 'testds_classes_pcts'
-    else:
+    elif dataset_type == 'train':
         dataset_key = 'trainds_classes_pcts'
+    else:
+        dataset_key = 'testds_classes_pcts_ext'
 
     if dataset_key in data_file == False:
         print("error: {} key no found")
@@ -56,8 +58,10 @@ def plot_model_accuracy(data_file, dataset_type):
     dataset_key = ''
     if dataset_type == 'test':
         dataset_key = 'testds_accuracy'
-    else:
+    elif dataset_type == 'train':
         dataset_key = 'trainds_accuracy'
+    else:
+        dataset_key = 'testds_accuracy_ext'
 
     if dataset_key in data_file == False:
         print("error: {} key no found")
@@ -90,8 +94,10 @@ def plot_loss(data_file, dataset_type):
     dataset_key = ''
     if dataset_type == 'test':
         dataset_key = 'testds_loss'
-    else:
+    elif dataset_type == 'train':
         dataset_key = 'trainds_loss'
+    else:
+        dataset_key = 'testds_loss_ext'
 
     if dataset_key in data_file == False:
         print("error: {} key no found")
@@ -162,10 +168,17 @@ def main():
     plot_loss(data_file, dataset_type)
     plot_avg_cropped_px(data_file)
 
-    dataset_type = 'train'
+    #dataset_type = 'train'
+    #plot_model_accuracy(data_file, dataset_type)
+    #plot_classes_results(data_file, dataset_type)
+    #plot_loss(data_file, dataset_type)
+
+    dataset_type = 'cropped_train'
     plot_model_accuracy(data_file, dataset_type)
     plot_classes_results(data_file, dataset_type)
     plot_loss(data_file, dataset_type)
+
+
     print("Done!")
 
 if __name__ == "__main__":
