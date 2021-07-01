@@ -26,10 +26,13 @@ def plot_classes_results(data_file, dataset_type):
     else:
         dataset_key = 'testds_classes_pcts_ext'
 
-    if dataset_key in data_file == False:
-        print("error: {} key no found")
+    if (dataset_key in data_file[0]) == False:
+        print("{} key no found. It won't be plotted".format(dataset_key))
         return False
 
+    height =10
+    width =  len(data_file)
+    plt.figure(figsize=(width, height))
     for c in range(len(classes)):
         tmp = []
         x =[]
@@ -63,13 +66,16 @@ def plot_model_accuracy(data_file, dataset_type):
     else:
         dataset_key = 'testds_accuracy_ext'
 
-    if dataset_key in data_file == False:
-        print("error: {} key no found")
+    if (dataset_key in data_file[0]) == False:
+        print("{} key no found. It won't be plotted".format(dataset_key))
         return False
 
     acc = []
     x =[]
     i = 0
+    height = 10
+    width = len(data_file)
+    plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         acc.append(r[dataset_key])
@@ -99,10 +105,13 @@ def plot_loss(data_file, dataset_type):
     else:
         dataset_key = 'testds_loss_ext'
 
-    if dataset_key in data_file == False:
-        print("error: {} key no found")
+    if (dataset_key in data_file[0]) == False:
+        print("{} key no found. It won't be plotted".format(dataset_key))
         return False
     i = 0
+    height = 10
+    width = len(data_file)
+    plt.figure(figsize=(width, height))
     for r in data_file:
         img_name = "loss_iteration_{}.png".format(i)
         train_loss = r['train_model_loss']
@@ -125,6 +134,9 @@ def plot_avg_cropped_px(data_file):
     croppx = []
     x =[]
     i = 0
+    height = 10
+    width = len(data_file)
+    plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         croppx.append(r['avg_cropped_pixels'])
@@ -168,10 +180,10 @@ def main():
     plot_loss(data_file, dataset_type)
     plot_avg_cropped_px(data_file)
 
-    #dataset_type = 'train'
-    #plot_model_accuracy(data_file, dataset_type)
-    #plot_classes_results(data_file, dataset_type)
-    #plot_loss(data_file, dataset_type)
+    dataset_type = 'train'
+    plot_model_accuracy(data_file, dataset_type)
+    plot_classes_results(data_file, dataset_type)
+    plot_loss(data_file, dataset_type)
 
     dataset_type = 'cropped_train'
     plot_model_accuracy(data_file, dataset_type)
