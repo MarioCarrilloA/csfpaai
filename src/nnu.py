@@ -27,7 +27,6 @@ from multiprocessing import Lock
 from PIL import Image
 from sacred import Experiment
 from sacred.observers import file_storage
-#from skimage import io
 from sklearn.model_selection import train_test_split
 from torch import topk
 from torch.autograd import Variable
@@ -292,7 +291,7 @@ def build_model(
     testds_loss = []
     testdsT_loss = []
     trainds_loss = []
-    print("Start train/test resnet18!", type(extra_loader))
+    print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
         testdsL, testds_acc, testds_pcts = test_model(model, test_loader)
