@@ -332,7 +332,7 @@ def crop_preprocess(x, model, extractor, cropped_pixels):
     return x.float()
 
 
-def save_sample(original, cam, heat_map, crop, acc, tgt, predt, out):
+def save_sample(original, cam, heat_map, crop, tgt, predt, out):
     vcam = cam.cpu().data.numpy()
     vheat_map = heat_map.cpu().data.numpy()
     res = "FAIL!"
@@ -341,7 +341,7 @@ def save_sample(original, cam, heat_map, crop, acc, tgt, predt, out):
 
     plt.clf()
     f, ax = plt.subplots(nrows=1, ncols=4, figsize=(20, 5))
-    f.suptitle('ACCURACY: {}% TARGET: {}  PREDICTION: {} - {}'.format(acc, tgt, predt, res), fontsize=20)
+    f.suptitle('TARGET: {}  PREDICTION: {} - {}'.format(tgt, predt, res), fontsize=20)
     ax[0].imshow(original)
     ax[0].set_title("Original")
     ax[1].imshow(vcam, alpha=0.5, cmap='jet')
@@ -360,15 +360,32 @@ def save_random_samples(model_base, extractor, num_samples, crop_transformation,
         image, label =  get_one_random_sample(test_dataset)
         image_tensor = test_transform(image)
         image_tensor = image_tensor.to(device)
-        #cam_img, heat_map, index, value = get_heatmaps(image_tensor, model_base)
         cam_img, heat_map, index, value = compute_heatmap(image_tensor, model_base, extractor)
         cropped_image = crop_transformation(image)
         prediction = classes[index.item()]
         target = classes[label]
-        acc = round(value.item() * 100, 2)
-        out = "../res/sample{}.{}.png".format(prefix, i)
+        out = "../res/random_sample{}.{}.png".format(prefix, i)
         save_sample(image, cam_img, heat_map, cropped_image,
-            acc, target, prediction, out)
+                target, prediction, out)
+
+
+def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix):
+    num_samples= 5
+    data_iter = iter(loader)
+    images, labels = data_iter.next()
+
+    for i in range(num_samples):
+        image = images[i]
+        image = image.to(device)
+        cam_img, heat_map, index, value = compute_heatmap(image, model_base, extractor)
+        image = image.cpu().detach().numpy()
+        image = np.transpose(image, (1,2,0))
+        cropped_image = crop_transformation(image)
+        prediction = classes[index.item()]
+        target = classes[labels[i]]
+        out = "../res/seq_sample{}.{}.png".format(prefix, i)
+        save_sample(image, cam_img, heat_map, cropped_image,
+                target, prediction, out)
 
 
 def create_new_dataset(dset, new_data, crop_transformation, train=True):

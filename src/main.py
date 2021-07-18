@@ -103,6 +103,16 @@ def main(
                 itr
         )
 
+        save_sequential_samples(
+                prev_model,
+                extractor,
+                num_samples,
+                crop_transformation,
+                test_transformed_loader,
+                itr
+        )
+
+
         # This line is to avoid saving the images with the transformations
         # used for data augmentation.
         if isinstance(train_dataset, croppedCIFAR10):
