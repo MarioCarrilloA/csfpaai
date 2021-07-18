@@ -88,12 +88,15 @@ def main(
 
         # When the base model has been trained.
         ######################################################################
+        extractor = CAM(prev_model, 'resnet.layer4', 'resnet.fc')
         crop_transformation = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Lambda(lambda x: crop_preprocess(x, prev_model, cropped_pixels))])
+            transforms.Lambda(lambda x: crop_preprocess(x, prev_model,
+                    extractor, cropped_pixels))])
 
         save_random_samples(
                 prev_model,
+                extractor,
                 num_samples,
                 crop_transformation,
                 train_dataset,

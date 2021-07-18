@@ -32,7 +32,7 @@ if [ $# -eq 0 ]; then
         --container-image=/netscratch/enroot/dlcc_pytorch_20.10.sqsh \
         --container-workdir="$(pwd)" \
         --container-mounts=/netscratch/$USER:/netscratch/$USER,/ds:/ds:ro,"$(pwd)":"$(pwd)" \
-        python main.py
+        bash job.sh
     exit 0
 else
     while getopts ":hci" opt; do

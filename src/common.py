@@ -26,7 +26,7 @@ from torch.utils.data import random_split, Dataset, Subset
 from torchvision import models, datasets, transforms
 from torchvision.utils import save_image
 from tqdm import tqdm
-
+from torchcam.cams import CAM
 
 # Check for GPU/CPU to allocate tensor
 device = None

@@ -291,13 +291,29 @@ def get_heatmaps(tensor, model):
     return cam_img, heat_map, index, value
 
 
-def crop_preprocess(x, model, cropped_pixels):
+def compute_heatmap(x, model, extractor):
+    with torch.no_grad(): scores = model(x.unsqueeze(0))
+    value, index = topk(scores, 1)
+    cam = extractor(class_idx=index.item(), scores=scores)
+
+    # Add 2 singleton dimensions to do the interpolation and adjust
+    # the activation map to the image size. Then, after interpolation
+    # we need to remove those extar dimensions,
+    cam = cam.unsqueeze(0).unsqueeze(0)
+    heat_map = F.interpolate(cam, size=(32, 32), mode='bilinear')
+    heat_map = heat_map.squeeze(0).squeeze(0)
+    cam = cam.squeeze(0).squeeze(0)
+
+    return cam, heat_map, index, value
+
+
+def crop_preprocess(x, model, extractor, cropped_pixels):
     # The 5% of the highest values represent a one of the most
     # important values for classification. These values will be
     # for experiments modified.
     replacement = 1.0
     x = x.to(device)
-    cam_img, heat_map, index, value = get_heatmaps(x, model)
+    cam_img, heat_map, index, value = compute_heatmap(x, model, extractor)
     percentile = 95
     h, w = heat_map.shape
     feature_thld = torch.quantile(heat_map, percentile * 0.01)
@@ -338,16 +354,18 @@ def save_sample(original, cam, heat_map, crop, acc, tgt, predt, out):
     plt.savefig(out, bbox_inches='tight')
 
 
-def save_random_samples(model_base, num_samples, crop_transformation, test_dataset, prefix=1):
+def save_random_samples(model_base, extractor, num_samples, crop_transformation, test_dataset, prefix=1):
     for i in range(num_samples):
         # CAM
         image, label =  get_one_random_sample(test_dataset)
         image_tensor = test_transform(image)
-        cam_img, heat_map, index, value = get_heatmaps(image_tensor, model_base)
+        image_tensor = image_tensor.to(device)
+        #cam_img, heat_map, index, value = get_heatmaps(image_tensor, model_base)
+        cam_img, heat_map, index, value = compute_heatmap(image_tensor, model_base, extractor)
         cropped_image = crop_transformation(image)
-        prediction = classes[index.tolist()[0]]
+        prediction = classes[index.item()]
         target = classes[label]
-        acc = round(value.tolist()[0] * 100, 2)
+        acc = round(value.item() * 100, 2)
         out = "../res/sample{}.{}.png".format(prefix, i)
         save_sample(image, cam_img, heat_map, cropped_image,
             acc, target, prediction, out)
