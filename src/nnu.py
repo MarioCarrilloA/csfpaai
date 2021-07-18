@@ -292,7 +292,8 @@ def get_heatmaps(tensor, model):
 
 
 def compute_heatmap(x, model, extractor):
-    with torch.no_grad(): scores = model(x.unsqueeze(0))
+    #with torch.no_grad(): scores = model(x.unsqueeze(0))
+    scores = model(x.unsqueeze(0))
     value, index = topk(scores, 1)
     cam = extractor(class_idx=index.item(), scores=scores)
 

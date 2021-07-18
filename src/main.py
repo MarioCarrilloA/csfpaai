@@ -93,7 +93,7 @@ def main(
         else:
             # Set algorithm to compute  class-specific activation of
             # convolutional layers.
-            extractor = CAM(prev_model, 'resnet.layer4', 'resnet.fc')
+            extractor = GradCAM(prev_model, 'resnet.layer4', 'resnet.fc')
 
             # Use the class activation map algorithm and the previous
             # trained model to specify the transformation for next iteration.
@@ -150,6 +150,7 @@ def main(
 
             # Create datasets with the cropped data obtained from
             # previous iteration.
+            train_dataset = None
             train_dataset = croppedCIFAR10(
                             root=new_dataset_dir,
                             transform=train_transform
@@ -160,6 +161,7 @@ def main(
                             shuffle=True
             )
 
+            test_transformed_dataset = None
             test_transformed_dataset = croppedCIFAR10(
                             root=new_dataset_dir,
                             transform=test_transform,

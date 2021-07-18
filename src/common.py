@@ -27,6 +27,7 @@ from torchvision import models, datasets, transforms
 from torchvision.utils import save_image
 from tqdm import tqdm
 from torchcam.cams import CAM
+from torchcam.cams import GradCAM
 
 # Check for GPU/CPU to allocate tensor
 device = None
