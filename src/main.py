@@ -67,7 +67,7 @@ def main(
             )
             test_loader = torch.utils.data.DataLoader(
                             test_dataset,
-                            batch_size=5000,
+                            batch_size=128,
                             shuffle=False
             )
 
@@ -169,7 +169,7 @@ def main(
             )
             test_transformed_loader = torch.utils.data.DataLoader(
                             test_transformed_dataset,
-                            batch_size=5000,
+                            batch_size=128,
                             shuffle=False
             )
 
