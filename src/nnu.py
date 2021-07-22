@@ -224,20 +224,17 @@ def build_model(
     train_model_loss = []
     testds_loss = []
     testdsT_loss = []
-    trainds_loss = []
     print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
         testdsL, testds_acc, testds_pcts = test_model(model, test_loader)
         testdsT, testdsT_acc, testdsT_pcts = test_model(model, extra_loader)
-        #traindsL, trainds_acc, trainds_pcts = test_model(model, train_loader)
 
         # Collect results
         output = format_model_output(epoch, avg_loss, testdsL, testds_acc, testds_pcts)
         train_model_loss.append(avg_loss)
         testds_loss.append(testdsL.item())
         testdsT_loss.append(testdsT.item())
-        #trainds_loss.append(traindsL.item())
         print(output)
 
         scheduler.step()
@@ -252,9 +249,6 @@ def build_model(
             "testds_accuracy_ext" : testdsT_acc,
             "testds_loss_ext" : testdsT_loss,
             "testds_classes_pcts_ext" : testdsT_pcts
-            #"trainds_accuracy" : trainds_acc,
-            #"trainds_loss" : trainds_loss,
-            #"trainds_classes_pcts" : trainds_pcts
     }
 
     return model, metrics
