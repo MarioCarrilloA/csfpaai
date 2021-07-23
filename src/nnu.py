@@ -357,7 +357,7 @@ def crop_preprocess(x, model, extractor, cropped_pixels):
     return x.float()
 
 
-def save_sample(original, cam, heat_map, crop, tgt, predt, out):
+def save_sample(original, cam, heat_map, crop, tgt, predt, out, prefix, i, exl):
     vcam = cam.cpu().data.numpy()
     vheat_map = heat_map.cpu().data.numpy()
     res = "FAIL!"
@@ -366,7 +366,17 @@ def save_sample(original, cam, heat_map, crop, tgt, predt, out):
 
     plt.clf()
     f, ax = plt.subplots(nrows=1, ncols=4, figsize=(20, 5))
-    f.suptitle('TARGET: {}  PREDICTION: {} - {}'.format(tgt, predt, res), fontsize=20)
+    f.suptitle('{}.{} - EXTRACTOR: {}  -  TARGET: {}  PREDICTION: {} - {}'.format(
+                prefix,
+                i,
+                exl,
+                tgt,
+                predt,
+                res),
+                fontsize=20
+    )
+
+    # Plot
     ax[0].imshow(original)
     ax[0].set_title("Original")
     ax[1].imshow(vcam, alpha=0.5, cmap='jet')
@@ -390,8 +400,13 @@ def save_random_samples(model_base, extractor, num_samples, crop_transformation,
         prediction = classes[index.item()]
         target = classes[label]
         out = "../res/random_sample{}.{}.png".format(prefix, i)
+        # Extractor label
+        if isinstance(extractor, torchcam.cams.CAM):
+            exl = "CAM"
+        else:
+            exl = "GradCAM"
         save_sample(image, cam_img, heat_map, cropped_image,
-                target, prediction, out)
+                target, prediction, out, prefix, i, exl)
 
 
 def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix):
@@ -409,8 +424,13 @@ def save_sequential_samples(model_base, extractor, num_samples, crop_transformat
         prediction = classes[index.item()]
         target = classes[labels[i]]
         out = "../res/seq_sample{}.{}.png".format(prefix, i)
+        # Extractor label
+        if isinstance(extractor, torchcam.cams.CAM):
+            exl = "CAM"
+        else:
+            exl = "GradCAM"
         save_sample(image, cam_img, heat_map, cropped_image,
-                target, prediction, out)
+                target, prediction, out, prefix, i, exl)
 
 
 def create_new_dataset(dset, new_data, crop_transformation, train=True):
