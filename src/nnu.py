@@ -164,11 +164,31 @@ def get_classes_percentage(targets, predictions):
     return percentage_per_class
 
 
+def compute_pct_perclass(correct_per_class, total_per_class):
+    percentage_per_class = [0] * num_classes
+    for i in range(num_classes):
+        if total_per_class[i] == 0:
+            percentage_per_class[i] = 0
+        else:
+            percentage_per_class[i] = 100 * (correct_per_class[i] / total_per_class[i])
+
+    return percentage_per_class
+
+
+
 def test_model(model, dataset_loader, verbose=False):
     model.eval()
     loss = 0
     correct = 0
 
+    # The tuple classes is defined in common, this is according to
+    # the dataset.
+    num_classes = len(classes)
+
+    # Init empty list according to the number of classes
+    correct_per_class = [0] * num_classes
+    total_per_class = [0] * num_classes
+    pct_per_class = [0] * num_classes
     for data, target in dataset_loader:
         with torch.no_grad():
             data = data.cuda()
@@ -180,15 +200,25 @@ def test_model(model, dataset_loader, verbose=False):
             prediction = prediction.max(1)[1]
             correct += prediction.eq(target.view_as(prediction)).sum().item()
 
-            loss /= len(dataset_loader.dataset)
+            #loss /= len(dataset_loader.dataset)
+            total_loss = loss / len(dataset_loader.dataset)
             percentage_correct = 100.0 * correct / len(dataset_loader.dataset)
             percentage_classes = get_classes_percentage(target, prediction)
 
+            # Accumulate data from every batch in order to compute
+            # the accuracy per class.
+            for i in range(len(target)):
+                class_id = target[i]
+                if target[i] == prediction[i]:
+                    correct_per_class[class_id] += 1
+                total_per_class[class_id] += 1
+
             if (verbose):
                 print("Testing set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)".format(
-                    loss, correct, len(dataset_loader.dataset), percentage_correct))
+                    total_loss, correct, len(dataset_loader.dataset), percentage_per_class))
+    percentage_per_class = compute_pct_perclass(correct_per_class, total_per_class)
 
-    return loss, percentage_correct, percentage_classes
+    return total_loss, percentage_correct, percentage_per_class
 
 
 def format_model_output(e, avg_loss, tloss, testds_acc, pct_classes):
