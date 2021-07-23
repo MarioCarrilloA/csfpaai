@@ -10,7 +10,7 @@ if len(exp.observers) == 0:
 
 @exp.config
 def config():
-    max_iterations = 20
+    max_iterations = 25
     epochs = 50
     learning_rate = 0.1
     min_accuracy = 30

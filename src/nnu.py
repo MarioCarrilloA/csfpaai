@@ -410,7 +410,7 @@ def save_random_samples(model_base, extractor, num_samples, crop_transformation,
 
 
 def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix):
-    num_samples= 5
+    num_samples= 10
     data_iter = iter(loader)
     images, labels = data_iter.next()
 
