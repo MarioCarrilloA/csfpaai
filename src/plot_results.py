@@ -30,7 +30,7 @@ def plot_classes_results(data_file, dataset_type):
         print("{} key no found. It won't be plotted".format(dataset_key))
         return False
 
-    height =10
+    height =20
     width =  len(data_file)
     plt.figure(figsize=(width, height))
     for c in range(len(classes)):
@@ -40,19 +40,21 @@ def plot_classes_results(data_file, dataset_type):
         for r in data_file:
             i+=1
             tmp.append(r[dataset_key][c])
-            x.append("i" + str(i))
+            x.append(i)
         plt.clf()
+        plt.margins(x=0)
+        plt.xticks(x)
         plt.title("Using *{}* dataset - Class accuracy: ".format(dataset_type) +
                 classes[c] + "\n", fontsize=15)
         plt.ylim([0,100])
         rgb = (random.random(), random.random(), random.random())
-        plt.bar(x, tmp,  align='center', color=[rgb], width=0.4)
+        plt.bar(x, tmp,  align='center', color=[rgb])
         plt.ylabel("Percentage")
         plt.xlabel("Iterations")
 
         # Labels above bars
         for i, v in enumerate(tmp):
-            plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
+            plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
         plt.savefig(out_path + "{}_".format(dataset_type) +
                 classes[c] + ".jpg", bbox_inches='tight')
 
@@ -73,25 +75,27 @@ def plot_model_accuracy(data_file, dataset_type):
     acc = []
     x =[]
     i = 0
-    height = 10
+    height = 20
     width = len(data_file)
     plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         acc.append(r[dataset_key])
-        x.append("i" + str(i))
+        x.append(i)
     rgb = (random.random(), random.random(), random.random())
     plt.clf()
+    plt.margins(x=0)
+    plt.xticks(x)
     plt.title("Model accuracy per iteration " +
             "using *{}* dataset for testing".format(dataset_type) + "\n")
     plt.ylim([0,100])
-    plt.bar(x, acc,  align='center', color=[rgb], width=0.4)
+    plt.bar(x, acc,  align='center', color=[rgb])
     plt.ylabel("Percentage")
     plt.xlabel("Iterations")
 
     # Labels above bars
     for i, v in enumerate(acc):
-        plt.text(i - 0.20, v + 1, str(round(v, 2)) + "%")
+        plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
     plt.savefig(out_path + "{}_".format(dataset_type) +
             "model_accuracy.jpg", bbox_inches='tight')
 
@@ -109,9 +113,7 @@ def plot_loss(data_file, dataset_type):
         print("{} key no found. It won't be plotted".format(dataset_key))
         return False
     i = 0
-    height = 10
-    width = len(data_file)
-    plt.figure(figsize=(width, height))
+    plt.figure()
     for r in data_file:
         img_name = "loss_iteration_{}.png".format(i)
         train_loss = r['train_model_loss']
@@ -134,24 +136,25 @@ def plot_avg_cropped_px(data_file):
     croppx = []
     x =[]
     i = 0
-    height = 10
+    height = 20
     width = len(data_file)
     plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         croppx.append(r['avg_cropped_pixels'])
-        x.append("i" + str(i))
+        x.append(i)
     plt.clf()
+    plt.margins(x=0)
+    plt.xticks(x)
     plt.title("Average cropped pixels")
-    #plt.ylim([0,100])
     rgb = (random.random(), random.random(), random.random())
-    plt.bar(x, croppx,  align='center', color=[rgb], width=0.4)
+    plt.bar(x, croppx,  align='center', color=[rgb])
     plt.ylabel("Average number of cropped pixels")
     plt.xlabel("Iterations")
 
     # Labels above bars
     for i, v in enumerate(croppx):
-        plt.text(i - 0.20, v + 1, str(round(v, 2)) + "px")
+        plt.text(i + 0.6, v + 1, str(round(v, 2)) + "pxs")
     plt.savefig(out_path + "avg_cropped_pixels.jpg", bbox_inches='tight')
 
 
@@ -185,7 +188,7 @@ def main():
     plot_classes_results(data_file, dataset_type)
     plot_loss(data_file, dataset_type)
 
-    dataset_type = 'cropped_train'
+    dataset_type = 'cropped_test'
     plot_model_accuracy(data_file, dataset_type)
     plot_classes_results(data_file, dataset_type)
     plot_loss(data_file, dataset_type)
