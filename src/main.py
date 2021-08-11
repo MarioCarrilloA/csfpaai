@@ -3,6 +3,7 @@ from nnu import *
 exp = Experiment('PAAL Experiment')
 EXP_FOLDER = '../exp/'
 log_location = os.path.join(EXP_FOLDER, os.path.basename(sys.argv[0])[:-3])
+
 if len(exp.observers) == 0:
     print('Adding a file observer in %s' % log_location)
     exp.observers.append(file_storage.FileStorageObserver.create(log_location))
@@ -99,8 +100,12 @@ def main(
             # trained model to specify the transformation for next iteration.
             crop_transformation = transforms.Compose([
                 transforms.ToTensor(),
-                transforms.Lambda(lambda x: crop_preprocess(x, prev_model,
-                        extractor, cropped_pixels))])
+                transforms.Lambda(lambda x: crop_preprocess(
+                                            x,
+                                            prev_model,
+                                            extractor,
+                                            cropped_pixels))
+            ])
 
             # Save some samples using the our customized tranformation
             save_random_samples(
