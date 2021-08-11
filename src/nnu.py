@@ -129,9 +129,9 @@ def get_one_random_sample(test_dataset):
         label = test_dataset[random_index][1]
     elif isinstance(test_dataset, Subset):
         num_total_imgs = len(test_dataset.dataset.data)
-        random_index = random.randint(1, num_total_imgs)
-        img = test_dataset.dataset.data[random_index]
-        label = test_dataset.dataset.targets[random_index]
+        random_index = random.randint(1, round(num_total_imgs * 0.90))
+        img, label = test_dataset[random_index]
+        img = transforms.ToPILImage()(img).convert("RGB")
     else:
         num_total_imgs = len(test_dataset.data)
         random_index = random.randint(1, num_total_imgs)
