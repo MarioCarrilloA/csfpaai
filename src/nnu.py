@@ -29,6 +29,11 @@ from torchvision.utils import save_image
 from tqdm import tqdm
 from torchcam.cams import CAM
 from torchcam.cams import GradCAM
+from torchcam.cams import GradCAMpp
+from torchcam.cams import SmoothGradCAMpp
+from torchcam.cams import ScoreCAM
+from torchcam.cams import SSCAM
+from torchcam.cams import ISCAM
 
 
 class Model(torch.nn.Module):
@@ -347,12 +352,15 @@ def get_heatmaps(tensor, model):
     return cam_img, heat_map, index, value
 
 
-def compute_heatmap(x, model, extractor):
-    #with torch.no_grad(): scores = model(x.unsqueeze(0))
-
+def compute_heatmap(x, model, extractor, cam_algorithm):
     img_size=x.shape
     img_size=img_size[-2:]
-    scores = model(x.unsqueeze(0))
+    if cam_algorithm == 'GradCam' or cam_algorithm == 'GradCAMpp' or cam_algorithm == 'SmoothGradCAMpp':
+        scores = model(x.unsqueeze(0))
+    else:
+        with torch.no_grad(): scores = model(x.unsqueeze(0))
+
+    # extract class activation map
     value, index = topk(scores, 1)
     cam = extractor(class_idx=index.item(), scores=scores)
 
@@ -367,13 +375,13 @@ def compute_heatmap(x, model, extractor):
     return cam, heat_map, index, value
 
 
-def crop_preprocess(x, model, extractor, cropped_pixels):
+def crop_preprocess(x, model, extractor, cam_algorithm, cropped_pixels):
     # The 5% of the highest values represent a one of the most
     # important values for classification. These values will be
     # for experiments modified.
     replacement = 1.0
     x = x.to('cuda')
-    cam_img, heat_map, index, value = compute_heatmap(x, model, extractor)
+    cam_img, heat_map, index, value = compute_heatmap(x, model, extractor, cam_algorithm)
     percentile = 95
     h, w = heat_map.shape
     feature_thld = torch.quantile(heat_map, percentile * 0.01)
@@ -424,27 +432,22 @@ def save_sample(original, cam, heat_map, crop, tgt, predt, out, prefix, i, exl):
     plt.savefig(out, bbox_inches='tight')
 
 
-def save_random_samples(model_base, extractor, num_samples, crop_transformation, test_dataset, prefix, test_transform, classes):
+def save_random_samples(model_base, extractor, cam_algorithm, num_samples, crop_transformation, test_dataset, prefix, test_transform, classes):
     for i in range(num_samples):
         # CAM
         image, label =  get_one_random_sample(test_dataset)
         image_tensor = test_transform(image)
         image_tensor = image_tensor.to('cuda')
-        cam_img, heat_map, index, value = compute_heatmap(image_tensor, model_base, extractor)
+        cam_img, heat_map, index, value = compute_heatmap(image_tensor, model_base, extractor, cam_algorithm)
         cropped_image = crop_transformation(image)
         prediction = classes[index.item()]
         target = classes[label]
         out = "../res/random_sample{}.{}.png".format(prefix, i)
-        # Extractor label
-        if isinstance(extractor, torchcam.cams.CAM):
-            exl = "CAM"
-        else:
-            exl = "GradCAM"
         save_sample(image, cam_img, heat_map, cropped_image,
-                target, prediction, out, prefix, i, exl)
+                target, prediction, out, prefix, i, cam_algorithm)
 
 
-def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix, classes):
+def save_sequential_samples(model_base, extractor, cam_algorithm, num_samples, crop_transformation, loader, prefix, classes):
     num_samples= 10
     data_iter = iter(loader)
     images, labels = data_iter.next()
@@ -452,20 +455,15 @@ def save_sequential_samples(model_base, extractor, num_samples, crop_transformat
     for i in range(num_samples):
         image = images[i]
         image = image.to('cuda')
-        cam_img, heat_map, index, value = compute_heatmap(image, model_base, extractor)
+        cam_img, heat_map, index, value = compute_heatmap(image, model_base, extractor, cam_algorithm)
         image = image.cpu().detach().numpy()
         image = np.transpose(image, (1,2,0))
         cropped_image = crop_transformation(image)
         prediction = classes[index.item()]
         target = classes[labels[i]]
         out = "../res/seq_sample{}.{}.png".format(prefix, i)
-        # Extractor label
-        if isinstance(extractor, torchcam.cams.CAM):
-            exl = "CAM"
-        else:
-            exl = "GradCAM"
         save_sample(image, cam_img, heat_map, cropped_image,
-                target, prediction, out, prefix, i, exl)
+                target, prediction, out, prefix, i, cam_algorithm)
 
 
 def create_new_dataset(dset, new_data, crop_transformation, train=True):
@@ -488,8 +486,8 @@ def create_new_dataset(dset, new_data, crop_transformation, train=True):
         image = bio.getvalue()
         writer.write(ImageClassificationData(f'{n:05d}', image, int(label)))
         lbls.update([label])
-        #if n == 100:
-        #    break
+        if n == 100:
+            break
     writer.close()
 
 
@@ -507,3 +505,29 @@ def save_dataset_samples(loader, out):
         plt.imshow(np.transpose(images[i], (1, 2, 0)))
     plt.savefig(out, bbox_inches='tight')
 
+def get_extractor(cam_algorithm, model):
+    if cam_algorithm == 'CAM':
+        extractor = CAM(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'GradCAM':
+        extractor = GradCAM(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'GradCAMpp':
+        extractor = GradCAMpp(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'SmoothGradCAMpp':
+        extractor = SmoothGradCAMpp(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'ScoreCAM':
+        extractor = ScoreCAM(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'SSCAM':
+        extractor = SSCAM(model, 'resnet.layer4', 'resnet.fc')
+
+    elif cam_algorithm == 'ISCAM':
+        extractor = ISCAM(model, 'resnet.layer4', 'resnet.fc')
+
+    else:
+        None
+
+    return extractor

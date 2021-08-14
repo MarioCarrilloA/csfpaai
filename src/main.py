@@ -21,7 +21,7 @@ def config():
     min_accuracy = 30
     num_samples = 5
     dataset_name = 'CIFAR10' # [CIFAR10 | STL10]
-
+    cam_algorithm = 'CAM' # [CAM | GradCAM | GradCAMpp | SmoothGradCAMpp | ScoreCAM | SSCAM | ISCAM]
 
 @exp.automain
 def main(
@@ -30,7 +30,8 @@ def main(
     learning_rate,
     min_accuracy,
     num_samples,
-    dataset_name
+    dataset_name,
+    cam_algorithm
 ):
 
     # Get dataset & data augmentation structures
@@ -92,7 +93,11 @@ def main(
         else:
             # Set algorithm to compute  class-specific activation of
             # convolutional layers.
-            extractor = GradCAM(prev_model, 'resnet.layer4', 'resnet.fc')
+            extractor = get_extractor(cam_algorithm, prev_model)
+            if extractor == None:
+                sys.exit("ERROR: invalid CAM algorithm name")
+
+            #extractor = GradCAM(prev_model, 'resnet.layer4', 'resnet.fc')
 
             # Use the class activation map algorithm and the previous
             # trained model to specify the transformation for next iteration.
@@ -102,6 +107,7 @@ def main(
                                             x,
                                             prev_model,
                                             extractor,
+                                            cam_algorithm,
                                             cropped_pixels))
             ])
 
@@ -109,6 +115,7 @@ def main(
             save_random_samples(
                     prev_model,
                     extractor,
+                    cam_algorithm,
                     num_samples,
                     crop_transformation,
                     train_dataset,
@@ -120,6 +127,7 @@ def main(
             save_sequential_samples(
                     prev_model,
                     extractor,
+                    cam_algorithm,
                     num_samples,
                     crop_transformation,
                     test_transformed_loader,
