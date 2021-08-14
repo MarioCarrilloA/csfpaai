@@ -111,7 +111,7 @@ def get_dataset_components(dataset_name):
         )
 
     else:
-        return None
+        return None, None, None, None, None, None
 
     # Split datasets in 90% for training set and 10% for Validation set.
     train_num_samples = int(len(train_full_dataset) * 0.9)

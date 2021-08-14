@@ -349,6 +349,9 @@ def get_heatmaps(tensor, model):
 
 def compute_heatmap(x, model, extractor):
     #with torch.no_grad(): scores = model(x.unsqueeze(0))
+
+    img_size=x.shape
+    img_size=img_size[-2:]
     scores = model(x.unsqueeze(0))
     value, index = topk(scores, 1)
     cam = extractor(class_idx=index.item(), scores=scores)
@@ -357,7 +360,7 @@ def compute_heatmap(x, model, extractor):
     # the activation map to the image size. Then, after interpolation
     # we need to remove those extar dimensions,
     cam = cam.unsqueeze(0).unsqueeze(0)
-    heat_map = F.interpolate(cam, size=(32, 32), mode='bilinear')
+    heat_map = F.interpolate(cam, size=img_size, mode='bilinear')
     heat_map = heat_map.squeeze(0).squeeze(0)
     cam = cam.squeeze(0).squeeze(0)
 

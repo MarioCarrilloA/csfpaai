@@ -20,6 +20,7 @@ def config():
     learning_rate = 0.1
     min_accuracy = 30
     num_samples = 5
+    dataset_name = 'CIFAR10' # [CIFAR10 | STL10]
 
 
 @exp.automain
@@ -28,10 +29,22 @@ def main(
     epochs,
     learning_rate,
     min_accuracy,
-    num_samples
+    num_samples,
+    dataset_name
 ):
 
-    train_dataset, test_dataset, validation_dataset, train_transform, test_transform, classes = get_dataset_components('CIFAR10')
+    # Get dataset & data augmentation structures
+    train_dataset, \
+    test_dataset, \
+    validation_dataset, \
+    train_transform, \
+    test_transform, \
+    classes = get_dataset_components(dataset_name)
+
+    if train_dataset == None:
+        sys.exit("ERROR: invalid dataset name")
+
+    # Init values for first iteration
     test_transformed_dataset = test_dataset
     prev_model = None
     out_filename = "../res/results.json"
