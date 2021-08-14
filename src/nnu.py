@@ -1,4 +1,34 @@
-from common import *
+import json
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+import os.path
+import PIL
+import random
+import sys
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import torchcam
+
+from datadings.sets import ImageClassificationData
+from datadings.writer import FileWriter
+from datadings import reader as ddreader
+from matplotlib.pyplot import imshow
+from multiprocessing import Lock
+from PIL import Image
+from sacred import Experiment
+from sacred.observers import file_storage
+from sklearn.model_selection import train_test_split
+from torch import topk
+from torch.autograd import Variable
+from torch.utils.data import random_split, Dataset, Subset
+from torchvision import models, datasets, transforms
+from torchvision.utils import save_image
+from tqdm import tqdm
+from torchcam.cams import CAM
+from torchcam.cams import GradCAM
 
 
 class Model(torch.nn.Module):
@@ -29,7 +59,7 @@ class LayerFeatures():
     def remove(self): self.hook.remove()
 
 
-class croppedCIFAR10(Dataset):
+class croppedDataset(Dataset):
     def __init__(self,
                  root,
                  train=True,
@@ -121,7 +151,7 @@ def compute_CAM(feature_conv, class_weights):
 
 
 def get_one_random_sample(test_dataset):
-    if isinstance(test_dataset, croppedCIFAR10):
+    if isinstance(test_dataset, croppedDataset):
         num_total_imgs = len(test_dataset)
         random_index = random.randint(1, num_total_imgs - 1)
         imx = test_dataset[random_index][0]
@@ -141,7 +171,7 @@ def get_one_random_sample(test_dataset):
     return img, label
 
 
-def get_classes_percentage(targets, predictions):
+def get_classes_percentage(targets, predictions, classes):
     num_classes = len(classes)
     num_samples = len(targets)
 
@@ -164,7 +194,8 @@ def get_classes_percentage(targets, predictions):
     return percentage_per_class
 
 
-def compute_pct_perclass(correct_per_class, total_per_class):
+def compute_pct_perclass(correct_per_class, total_per_class, classes):
+    num_classes = len(classes)
     percentage_per_class = [0] * num_classes
     for i in range(num_classes):
         if total_per_class[i] == 0:
@@ -176,7 +207,7 @@ def compute_pct_perclass(correct_per_class, total_per_class):
 
 
 
-def test_model(model, dataset_loader, verbose=False):
+def test_model(model, dataset_loader, classes, verbose=False):
     model.eval()
     loss = 0
     correct = 0
@@ -203,7 +234,7 @@ def test_model(model, dataset_loader, verbose=False):
             #loss /= len(dataset_loader.dataset)
             total_loss = loss / len(dataset_loader.dataset)
             percentage_correct = 100.0 * correct / len(dataset_loader.dataset)
-            percentage_classes = get_classes_percentage(target, prediction)
+            percentage_classes = get_classes_percentage(target, prediction, classes)
 
             # Accumulate data from every batch in order to compute
             # the accuracy per class.
@@ -216,12 +247,12 @@ def test_model(model, dataset_loader, verbose=False):
             if (verbose):
                 print("Testing set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)".format(
                     total_loss, correct, len(dataset_loader.dataset), percentage_per_class))
-    percentage_per_class = compute_pct_perclass(correct_per_class, total_per_class)
+    percentage_per_class = compute_pct_perclass(correct_per_class, total_per_class, classes)
 
     return total_loss, percentage_correct, percentage_per_class
 
 
-def format_model_output(e, avg_loss, tloss, testds_acc, pct_classes):
+def format_model_output(e, avg_loss, tloss, testds_acc, pct_classes, classes):
     output  = "Epoch:{: <2} ".format(e)
     output += "TrainLoss:{: <4.2f} ".format(avg_loss)
     output += "TestLoss:{: <4.2f} ".format(tloss)
@@ -239,6 +270,7 @@ def build_model(
         epochs,
         lr,
         extra_loader,
+        classes,
         model_file="PAAI21_CIFAR10_model.pt"):
 
     model = Model()
@@ -257,11 +289,11 @@ def build_model(
     print("Start train/test resnet18!")
     for epoch in range(1, epochs + 1):
         avg_loss = train_model(model, train_loader, optimizer, epoch)
-        testdsL, testds_acc, testds_pcts = test_model(model, test_loader)
-        testdsT, testdsT_acc, testdsT_pcts = test_model(model, extra_loader)
+        testdsL, testds_acc, testds_pcts = test_model(model, test_loader, classes)
+        testdsT, testdsT_acc, testdsT_pcts = test_model(model, extra_loader, classes)
 
         # Collect results
-        output = format_model_output(epoch, avg_loss, testdsL, testds_acc, testds_pcts)
+        output = format_model_output(epoch, avg_loss, testdsL, testds_acc, testds_pcts, classes)
         train_model_loss.append(avg_loss)
         testds_loss.append(testdsL.item())
         testdsT_loss.append(testdsT.item())
@@ -337,7 +369,7 @@ def crop_preprocess(x, model, extractor, cropped_pixels):
     # important values for classification. These values will be
     # for experiments modified.
     replacement = 1.0
-    x = x.to(device)
+    x = x.to('cuda')
     cam_img, heat_map, index, value = compute_heatmap(x, model, extractor)
     percentile = 95
     h, w = heat_map.shape
@@ -389,12 +421,12 @@ def save_sample(original, cam, heat_map, crop, tgt, predt, out, prefix, i, exl):
     plt.savefig(out, bbox_inches='tight')
 
 
-def save_random_samples(model_base, extractor, num_samples, crop_transformation, test_dataset, prefix=1):
+def save_random_samples(model_base, extractor, num_samples, crop_transformation, test_dataset, prefix, test_transform, classes):
     for i in range(num_samples):
         # CAM
         image, label =  get_one_random_sample(test_dataset)
         image_tensor = test_transform(image)
-        image_tensor = image_tensor.to(device)
+        image_tensor = image_tensor.to('cuda')
         cam_img, heat_map, index, value = compute_heatmap(image_tensor, model_base, extractor)
         cropped_image = crop_transformation(image)
         prediction = classes[index.item()]
@@ -409,14 +441,14 @@ def save_random_samples(model_base, extractor, num_samples, crop_transformation,
                 target, prediction, out, prefix, i, exl)
 
 
-def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix):
+def save_sequential_samples(model_base, extractor, num_samples, crop_transformation, loader, prefix, classes):
     num_samples= 10
     data_iter = iter(loader)
     images, labels = data_iter.next()
 
     for i in range(num_samples):
         image = images[i]
-        image = image.to(device)
+        image = image.to('cuda')
         cam_img, heat_map, index, value = compute_heatmap(image, model_base, extractor)
         image = image.cpu().detach().numpy()
         image = np.transpose(image, (1,2,0))

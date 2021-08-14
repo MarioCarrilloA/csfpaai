@@ -1,4 +1,8 @@
+import os.path
+from torchvision import models, datasets, transforms
+
 from nnu import *
+from dsets import *
 
 exp = Experiment('PAAL Experiment')
 EXP_FOLDER = '../exp/'
@@ -27,28 +31,8 @@ def main(
     num_samples
 ):
 
-    # Download & transform CIFAR-10 datasets
-    train_full_dataset = datasets.CIFAR10(
-                    "./data",
-                    train=True,
-                    transform=train_transform,
-                    download=True
-    )
-    test_dataset = datasets.CIFAR10(
-                    "./data",
-                    train=False,
-                    transform=test_transform,
-                    download=True
-    )
-
+    train_dataset, test_dataset, validation_dataset, train_transform, test_transform, classes = get_dataset_components('CIFAR10')
     test_transformed_dataset = test_dataset
-    # Split datasets in 90% for training set and 10% for Validation set.
-    train_num_samples = int(len(train_full_dataset) * 0.9)
-    val_num_samples = int(len(train_full_dataset) * 0.1)
-    train_dataset, validation_dataset = random_split(
-            train_full_dataset,
-            [train_num_samples, val_num_samples]
-    )
     prev_model = None
     out_filename = "../res/results.json"
     for itr in range(max_iterations):
@@ -79,7 +63,8 @@ def main(
                                 test_loader,
                                 epochs,
                                 learning_rate,
-                                test_transformed_loader
+                                test_transformed_loader,
+                                classes
             )
             #_run.log_scalar(1, metrics)
             metrics.update({'avg_cropped_pixels': 0})
@@ -114,7 +99,9 @@ def main(
                     num_samples,
                     crop_transformation,
                     train_dataset,
-                    itr
+                    itr,
+                    test_transform,
+                    classes
             )
 
             save_sequential_samples(
@@ -123,13 +110,14 @@ def main(
                     num_samples,
                     crop_transformation,
                     test_transformed_loader,
-                    itr
+                    itr,
+                    classes
             )
 
 
             # This line is to avoid saving the images with the transformations
             # used for data augmentation.
-            if isinstance(train_dataset, croppedCIFAR10):
+            if isinstance(train_dataset, croppedDataset):
                 train_dataset.transform = None
             else:
                 train_dataset.dataset.transform = None
@@ -156,7 +144,7 @@ def main(
             # Create datasets with the cropped data obtained from
             # previous iteration.
             train_dataset = None
-            train_dataset = croppedCIFAR10(
+            train_dataset = croppedDataset(
                             root=new_dataset_dir,
                             transform=train_transform
             )
@@ -167,7 +155,7 @@ def main(
             )
 
             test_transformed_dataset = None
-            test_transformed_dataset = croppedCIFAR10(
+            test_transformed_dataset = croppedDataset(
                             root=new_dataset_dir,
                             transform=test_transform,
                             train=False
@@ -185,6 +173,7 @@ def main(
                                 epochs,
                                 learning_rate,
                                 test_transformed_loader,
+                                classes
             )
 
             #_run.log_scalar(1, metrics)
