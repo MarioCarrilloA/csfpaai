@@ -355,7 +355,8 @@ def get_heatmaps(tensor, model):
 def compute_heatmap(x, model, extractor, cam_algorithm):
     img_size=x.shape
     img_size=img_size[-2:]
-    if cam_algorithm == 'GradCam' or cam_algorithm == 'GradCAMpp' or cam_algorithm == 'SmoothGradCAMpp':
+    scores = None
+    if cam_algorithm == 'GradCAM' or cam_algorithm == 'GradCAMpp' or cam_algorithm == 'SmoothGradCAMpp':
         scores = model(x.unsqueeze(0))
     else:
         with torch.no_grad(): scores = model(x.unsqueeze(0))
@@ -486,8 +487,8 @@ def create_new_dataset(dset, new_data, crop_transformation, train=True):
         image = bio.getvalue()
         writer.write(ImageClassificationData(f'{n:05d}', image, int(label)))
         lbls.update([label])
-        if n == 100:
-            break
+        #if n == 100:
+        #    break
     writer.close()
 
 
@@ -510,22 +511,22 @@ def get_extractor(cam_algorithm, model):
         extractor = CAM(model, 'resnet.layer4', 'resnet.fc')
 
     elif cam_algorithm == 'GradCAM':
-        extractor = GradCAM(model, 'resnet.layer4', 'resnet.fc')
+        extractor = GradCAM(model, 'resnet.layer4')
 
     elif cam_algorithm == 'GradCAMpp':
-        extractor = GradCAMpp(model, 'resnet.layer4', 'resnet.fc')
+        extractor = GradCAMpp(model, 'resnet.layer4')
 
     elif cam_algorithm == 'SmoothGradCAMpp':
-        extractor = SmoothGradCAMpp(model, 'resnet.layer4', 'resnet.fc')
+        extractor = SmoothGradCAMpp(model, 'resnet.layer4')
 
     elif cam_algorithm == 'ScoreCAM':
-        extractor = ScoreCAM(model, 'resnet.layer4', 'resnet.fc')
+        extractor = ScoreCAM(model, 'resnet.layer4')
 
     elif cam_algorithm == 'SSCAM':
-        extractor = SSCAM(model, 'resnet.layer4', 'resnet.fc')
+        extractor = SSCAM(model, 'resnet.layer4')
 
     elif cam_algorithm == 'ISCAM':
-        extractor = ISCAM(model, 'resnet.layer4', 'resnet.fc')
+        extractor = ISCAM(model, 'resnet.layer4')
 
     else:
         None
