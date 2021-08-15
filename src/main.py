@@ -16,6 +16,7 @@ if len(exp.observers) == 0:
 @exp.config
 def config():
     max_iterations = 25
+    max_subiterations = 3
     epochs = 50
     learning_rate = 0.1
     min_accuracy = 30
@@ -26,6 +27,7 @@ def config():
 @exp.automain
 def main(
     max_iterations,
+    max_subiterations,
     epochs,
     learning_rate,
     min_accuracy,
@@ -71,18 +73,28 @@ def main(
             )
 
             test_transformed_loader = test_loader
+
+            # Computer x number of subiterations
+            all_metrics = []
             # Train model
-            prev_model, metrics = build_model(
-                                train_loader,
-                                test_loader,
-                                epochs,
-                                learning_rate,
-                                test_transformed_loader,
-                                classes
-            )
-            #_run.log_scalar(1, metrics)
-            metrics.update({'avg_cropped_pixels': 0})
-            collect_results(metrics, out_filename)
+            for subitr in range(max_subiterations):
+                prev_model = None
+                metrics = None
+                print("Subiteration: ", subitr)
+                prev_model, metrics = build_model(
+                                    train_loader,
+                                    test_loader,
+                                    epochs,
+                                    learning_rate,
+                                    test_transformed_loader,
+                                    classes
+                )
+                metrics.update({'avg_cropped_pixels': 0})
+                all_metrics.append(metrics)
+
+            # Save results
+            #collect_results(metrics, out_filename)
+            collect_results(all_metrics, out_filename)
             save_dataset_samples(train_loader, out_img)
             save_dataset_samples(test_transformed_loader, ext_out_img)
             continue
@@ -187,20 +199,29 @@ def main(
                             shuffle=False
             )
 
-            prev_model = None
-            prev_model, metrics = build_model(
-                                train_loader,
-                                test_loader,
-                                epochs,
-                                learning_rate,
-                                test_transformed_loader,
-                                classes
-            )
+            all_metrics = []
+            # Train model multiple times
+            for subitr in range(max_subiterations):
+                prev_model = None
+                metrics = None
+                print("Subiteration: ", subitr)
+                prev_model, metrics = build_model(
+                                    train_loader,
+                                    test_loader,
+                                    epochs,
+                                    learning_rate,
+                                    test_transformed_loader,
+                                    classes
+                )
 
-            #_run.log_scalar(1, metrics)
-            avg_cpix = sum(cropped_pixels) / len(cropped_pixels)
-            metrics.update({'avg_cropped_pixels': avg_cpix})
-            collect_results(metrics, out_filename)
+                #_run.log_scalar(1, metrics)
+                avg_cpix = sum(cropped_pixels) / len(cropped_pixels)
+                metrics.update({'avg_cropped_pixels': avg_cpix})
+                all_metrics.append(metrics)
+
+            # Save results
+            collect_results(all_metrics, out_filename)
+            #collect_results(metrics, out_filename)
             save_dataset_samples(train_loader, out_img)
             save_dataset_samples(test_transformed_loader, ext_out_img)
 
