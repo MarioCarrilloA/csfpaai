@@ -9,6 +9,21 @@ from torch.utils.data import random_split, Dataset, Subset
 from multiprocessing import Lock
 from datadings import reader as ddreader
 import statistics as stat 
+from matplotlib.pyplot import imshow
+import matplotlib.pyplot as plt
+
+classes = (
+    'plane',
+    'auto',
+    'bird',
+    'cat',
+    'deer',
+    'dog',
+    'frog',
+    'horse',
+    'ship',
+    'truck'
+)
 
 class croppedDataset(Dataset):
     def __init__(self,
@@ -49,9 +64,27 @@ class croppedDataset(Dataset):
         return im, raw_sample['label']
 
 
+def save_sample(img_id, img, label, x, y):
+    plt.clf()
+    f, ax = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
+    f.suptitle('Samples {}'.format(classes[label]), fontsize=20)
+    out = "../res/centroid_sample_{}.png".format(img_id)
+    # Plot
+    ax[0].imshow(img)
+    ax[0].set_title("Original")
+    ax[1].scatter(x, y)
+    ax[1].set_xlim([0, 32])
+    ax[1].set_ylim([32, 0])
+    ax[1].set_title("Cropped image")
+    plt.savefig(out, bbox_inches='tight')
+
+
 def compute_centroids(img_loader):
     white_px = (255, 255, 255)
+    img_id = 0
+    max_samples = 10
     for img, label in img_loader:
+        img_id += 1
         img = img.squeeze(0)
         img = transforms.ToPILImage()(img).convert("RGB")
         count = 0
@@ -66,7 +99,11 @@ def compute_centroids(img_loader):
                     wy.append(y)
         x_center = stat.mean(wx)
         y_center = stat.mean(wy)
+        print("TYPE:", type(img))
         print("Label:", label.item(), x_center, y_center)
+        if img_id <= max_samples:
+            print("Saving sample ", img_id)
+            save_sample(img_id, img, label.item(), x_center, y_center)
 
 
 def main():
