@@ -16,9 +16,24 @@ classes = ('plane',
            'frog',
            'horse',
            'ship',
-           'truck')
+           'truck'
+)
 out_path = "charts/"
 IMAGE_SIZE=(32, 32)
+
+
+bar_colors = (
+        'violet',
+        'yellowgreen',
+        'navajowhite',
+        'tomato',
+        'mediumorchid',
+        'silver',
+        'dodgerblue',
+        'mediumpurple',
+        'turquoise',
+        'limegreen'
+)
 
 
 def plot_classes_results(data_file, dataset_type):
@@ -68,13 +83,15 @@ def plot_classes_results(data_file, dataset_type):
                 classes[c] + "\n", fontsize=15)
         plt.ylim([0,100])
         rgb = (random.random(), random.random(), random.random())
-        plt.bar(x, avg_per_itr,  yerr=std_per_itr, align='center', color=[rgb], capsize=10)
+        #plt.bar(x, avg_per_itr,  yerr=std_per_itr, align='center', color=[rgb], capsize=10)
+        plt.bar(x, avg_per_itr,  yerr=std_per_itr, align='center', color=bar_colors[c],
+                    capsize=10, alpha=0.75)
         plt.ylabel("Percentage")
         plt.xlabel("Iterations")
 
         # Labels above bars
-        for i, v in enumerate(avg_per_itr):
-            plt.text(i + 0.7, v + std_per_itr[i] + 1, str(round(v, 2)) + "%")
+#        for i, v in enumerate(avg_per_itr):
+#            plt.text(i + 0.7, v + std_per_itr[i] + 1, str(round(v, 2)) + "%")
         plt.savefig(out_path + "{}_".format(dataset_type) +
                 classes[c] + ".jpg", bbox_inches='tight')
 
@@ -106,18 +123,20 @@ def plot_model_accuracy(data_file, dataset_type):
 
     rgb = (random.random(), random.random(), random.random())
     plt.clf()
+    #plt.figure(figsize=(20, 10))
     plt.margins(x=0)
     plt.xticks(x)
     plt.title("Model accuracy per iteration " +
             "using *{}* dataset for testing".format(dataset_type) + "\n")
     plt.ylim([0,100])
-    plt.bar(x, accuracy_per_itr, yerr=std_per_itr, align='center', color=[rgb], capsize=10)
+    #plt.bar(x, accuracy_per_itr, yerr=std_per_itr, align='center', color=[rgb], capsize=10)
+    plt.bar(x, accuracy_per_itr, yerr=std_per_itr, align='center', color='royalblue', capsize=10)
     plt.ylabel("Percentage")
     plt.xlabel("Iterations")
 
     # Labels above bars
-    for i, v in enumerate(accuracy_per_itr):
-        plt.text(i + 0.7, v + std_per_itr[i] + 1, str(round(v, 2)) + "%")
+    #for i, v in enumerate(accuracy_per_itr):
+    #    plt.text(i + 0.7, v + std_per_itr[i] + 1, str(round(v, 2)) + "%")
 
     plt.savefig(out_path + "{}_".format(dataset_type) +
             "model_accuracy.jpg", bbox_inches='tight')
@@ -165,24 +184,25 @@ def plot_loss(data_file, dataset_type):
 
         img_name = "loss_iteration_{}.png".format(itr)
         plt.clf()
+        #plt.figure(figsize=(20, 10))
         plt.title("Train and test loss (with *{}* datset) ".format(dataset_type) +
             "- Iteration {}\n".format(itr))
         # Train
         y = np.array(train_loss_avg)
         error = np.array(train_loss_std)
-        plt.errorbar(x, y=y,  color='blue', label='Train loss')
+        plt.errorbar(x, y=y,  color='#3385ff', label='Train loss')
         plt.fill_between(x, y-error, y+error,
                     alpha=0.5,  facecolor='gray', label='Train stdev')
 
         # Test
         y = np.array(test_loss_avg)
         error = np.array(test_loss_std)
-        plt.errorbar(x, y=y,  color='red', label='Test loss')
+        plt.errorbar(x, y=y,  color='#ff4d4d', label='Test loss')
         plt.fill_between(x, y-error, y+error,
                     alpha=0.5,  facecolor='pink', label='Test stdev')
         plt.ylabel("Loss")
         plt.xlabel("Epochs")
-        plt.xlim([0, epochs])
+        plt.xlim([1, epochs])
         plt.legend()
         plt.savefig(out_path + "{}_".format(dataset_type) +
                 img_name, bbox_inches='tight')
@@ -206,15 +226,17 @@ def plot_avg_cropped_px(data_file):
     plt.xticks(x)
     plt.title("Average cropped pixels")
     rgb = (random.random(), random.random(), random.random())
-    plt.bar(x, pixels_per_iteration,  align='center', color=[rgb])
+    plt.bar(x, pixels_per_iteration,  align='center', color='steelblue')
     plt.ylabel("Average number of cropped pixels")
     plt.xlabel("Iterations")
 
     # Labels above bars
     total_pixels = pow(IMAGE_SIZE[0], 2)
     for i, v in enumerate(pixels_per_iteration):
-        plt.text(i + 0.6, v + 1, str(round(v, 2)) + "pxs / " + \
-                str(round((v * 100) / total_pixels, 2)) + "%")
+        #plt.text(i + 0.6, v + 1, str(round(v, 2)) + "pxs / " + \
+        #        str(round((v * 100) / total_pixels, 2)) + "%")
+        plt.text(i + 0.6, v + 1, str(round((v * 100) / total_pixels, 2)) + "%", fontsize=6)
+
     plt.savefig(out_path + "avg_cropped_pixels.jpg", bbox_inches='tight')
 
 
