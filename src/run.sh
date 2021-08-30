@@ -18,7 +18,8 @@ Usage: $MYSELF [OPTIONS]
        -i,    Run container in interactive model.
        -p,    Extract information about centroids and plot all
               information from JSON files.
-       -c,    Clean outputs.
+       -c,    Clean plots and centroids files.
+       -a,    Clean all.
 EOF
 )
 	echo "$usage";
@@ -43,7 +44,7 @@ else
             help
             exit 0
         ;;
-        c)
+        a)
             echo "Clean outputs"
             set -x
             rm -rf ../res/*
@@ -55,6 +56,11 @@ else
             rm -f PAAI21_CIFAR10_model.pt
             rm -rf __pycache__
             exit 0
+        ;;
+        c)
+            rm -rf ../res/centroids_data_*
+            rm -rf ../res/centroids_charts
+            rm -rf ../res/charts
         ;;
         i)
             echo "interactive mode"
