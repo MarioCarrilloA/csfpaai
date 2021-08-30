@@ -4,7 +4,7 @@ import os.path
 import matplotlib.pyplot as plt
 import numpy as np
 
-out_path = "centroids_charts/"
+out_path = "../res/centroids_charts/"
 
 # Classes labels CIFAR-10
 classes = ('plane',
@@ -92,7 +92,7 @@ def plot_charts(data_file, basename):
     ax.legend()
 
     fig.suptitle(basename, fontsize=26)
-    plt.savefig(out_path + "{}.jpg".format(basename), bbox_inches='tight')
+    plt.savefig(out_path + "centroids_data_{}.jpg".format(basename), bbox_inches='tight')
 
 
 
@@ -105,9 +105,9 @@ def main():
     if os.path.isdir(out_path) == False:
         os.makedirs(out_path)
 
-    tokens = input_file.split(".")
+    tokens = input_file.split("_")
+    tokens = tokens[-1].split(".")
     basename = tokens[0]
-    print(basename)
     data_file = []
     if os.path.isfile(input_file) == True:
         with open(input_file, 'r') as json_file:

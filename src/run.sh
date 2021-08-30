@@ -14,9 +14,11 @@ Usage: $MYSELF [OPTIONS]
        required to execute the ML experiment. In addition, it includes
        some extra options that helps to debug and clean environment.
   Options:
-       -h,    Help page
-       -i,    Run container in interactive model
-       -c,    Clean outputs
+       -h,    Help page.
+       -i,    Run container in interactive model.
+       -p,    Extract information about centroids and plot all
+              information from JSON files.
+       -c,    Clean outputs.
 EOF
 )
 	echo "$usage";
@@ -35,7 +37,7 @@ if [ $# -eq 0 ]; then
         bash job.sh
     exit 0
 else
-    while getopts ":hci" opt; do
+    while getopts ":hcip" opt; do
         case ${opt} in
         h)
             help
@@ -65,6 +67,18 @@ else
                 --container-mounts=/netscratch/$USER:/netscratch/$USER,/ds:/ds:ro,"$(pwd)":"$(pwd)" \
                 --pty bash intv.sh
             exit 0
+        ;;
+        p)
+            echo "Extract centroids"
+            srun \
+                -K --gpus=$GPU_NUM \
+                -p "$GPU_BOARD" \
+                --container-image=/netscratch/enroot/dlcc_pytorch_20.10.sqsh \
+                --container-workdir="$(pwd)" \
+                --container-mounts=/netscratch/$USER:/netscratch/$USER,/ds:/ds:ro,"$(pwd)":"$(pwd)" \
+                --pty bash process_outputs.sh
+
+            echo "Plot everything"
         ;;
         \?)
             help

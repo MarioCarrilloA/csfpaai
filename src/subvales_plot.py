@@ -18,7 +18,7 @@ classes = ('plane',
            'ship',
            'truck'
 )
-out_path = "charts/"
+out_path = "../res/charts/"
 IMAGE_SIZE=(32, 32)
 
 
