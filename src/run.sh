@@ -75,7 +75,7 @@ else
             exit 0
         ;;
         p)
-            echo "Extract centroids"
+            echo "Plot results and centroids"
             srun \
                 -K --gpus=$GPU_NUM \
                 -p "$GPU_BOARD" \
