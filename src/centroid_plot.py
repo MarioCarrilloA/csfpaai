@@ -41,20 +41,12 @@ y = np.random.randn(1000)
 
 
 def scatter_hist(class_name, x, y, ax, ax_histx, ax_histy, color):
-    # no labels
-    #ax_histx.tick_params(axis="x", labelbottom=False)
     ax_histx.tick_params(axis="x")
-    #ax_histy.tick_params(axis="y", labelleft=False)
     ax_histy.tick_params(axis="y")
-
-    # the scatter plot:
     ax.scatter(x, y, color=color, alpha=0.5, s=30, label=class_name)
-
-    # now determine nice limits by hand:
     binwidth = 0.25
     xymax = max(np.max(np.abs(x)), np.max(np.abs(y)))
     lim = (int(xymax/binwidth) + 1) * binwidth
-
     bins = np.arange(-lim, lim + binwidth, binwidth)
     ax_histx.hist(x, bins=bins, histtype='step', color=color)
     ax_histy.hist(y, bins=bins, orientation='horizontal',histtype='step', color=color)
@@ -91,7 +83,7 @@ def plot_charts(data_file, basename):
 
     ax.legend()
 
-    fig.suptitle(basename, fontsize=26)
+    fig.suptitle("Centroids - dataset: {}".format(basename), fontsize=26)
     plt.savefig(out_path + "centroids_data_{}.jpg".format(basename), bbox_inches='tight')
 
 
