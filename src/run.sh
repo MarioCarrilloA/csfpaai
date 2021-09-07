@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GPU_BOARD="GTX1080Ti"
+GPU_BOARD="batch"
 GPU_NUM=1
 MYSELF=${0##*/}:w
 MEMORY="50GB"
