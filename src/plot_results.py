@@ -17,6 +17,22 @@ classes = ('plane',
            'truck')
 out_path = "charts/"
 
+bar_colors = (
+        'violet',
+        'yellowgreen',
+        'navajowhite',
+        'tomato',
+        'mediumorchid',
+        'silver',
+        'dodgerblue',
+        'mediumpurple',
+        'turquoise',
+        'limegreen'
+)
+
+
+
+
 def plot_classes_results(data_file, dataset_type):
     dataset_key = ''
     if dataset_type == 'test':
@@ -32,7 +48,7 @@ def plot_classes_results(data_file, dataset_type):
 
     height =20
     width =  len(data_file)
-    plt.figure(figsize=(width, height))
+    #plt.figure(figsize=(width, height))
     for c in range(len(classes)):
         tmp = []
         x =[]
@@ -41,6 +57,8 @@ def plot_classes_results(data_file, dataset_type):
             i+=1
             tmp.append(r[dataset_key][c])
             x.append(i)
+            if i == 25:
+                break
         plt.clf()
         plt.margins(x=0)
         plt.xticks(x)
@@ -49,12 +67,12 @@ def plot_classes_results(data_file, dataset_type):
         plt.ylim([0,100])
         rgb = (random.random(), random.random(), random.random())
         plt.bar(x, tmp,  align='center', color=[rgb])
-        plt.ylabel("Percentage")
+        plt.ylabel("Percentage (Accuracy)")
         plt.xlabel("Iterations")
 
         # Labels above bars
-        for i, v in enumerate(tmp):
-            plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
+        #for i, v in enumerate(tmp):
+        #    plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
         plt.savefig(out_path + "{}_".format(dataset_type) +
                 classes[c] + ".jpg", bbox_inches='tight')
 
@@ -77,25 +95,30 @@ def plot_model_accuracy(data_file, dataset_type):
     i = 0
     height = 20
     width = len(data_file)
-    plt.figure(figsize=(width, height))
+    #plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         acc.append(r[dataset_key])
         x.append(i)
+        if i == 25:
+            break
     rgb = (random.random(), random.random(), random.random())
+    print(dataset_type)
+    print("Accuracy", acc)
+    print("-----------------")
     plt.clf()
     plt.margins(x=0)
     plt.xticks(x)
     plt.title("Model accuracy per iteration " +
             "using *{}* dataset for testing".format(dataset_type) + "\n")
     plt.ylim([0,100])
-    plt.bar(x, acc,  align='center', color=[rgb])
-    plt.ylabel("Percentage")
+    plt.bar(x, acc,  align='center', color='royalblue')
+    plt.ylabel("Percentage (Accuracy)")
     plt.xlabel("Iterations")
 
     # Labels above bars
-    for i, v in enumerate(acc):
-        plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
+    #for i, v in enumerate(acc):
+    #    plt.text(i + 0.7, v + 1, str(round(v, 2)) + "%")
     plt.savefig(out_path + "{}_".format(dataset_type) +
             "model_accuracy.jpg", bbox_inches='tight')
 
@@ -138,11 +161,13 @@ def plot_avg_cropped_px(data_file):
     i = 0
     height = 20
     width = len(data_file)
-    plt.figure(figsize=(width, height))
+    #plt.figure(figsize=(width, height))
     for r in data_file:
         i+=1
         croppx.append(r['avg_cropped_pixels'])
         x.append(i)
+        if i == 25:
+            break
     plt.clf()
     plt.margins(x=0)
     plt.xticks(x)
@@ -154,7 +179,9 @@ def plot_avg_cropped_px(data_file):
 
     # Labels above bars
     for i, v in enumerate(croppx):
-        plt.text(i + 0.6, v + 1, str(round(v, 2)) + "pxs")
+        #plt.text(i + 0.6, v + 1, str(round(v, 2)) + "pxs")
+        total_pixels = pow(96, 2)
+        plt.text(i + 0.6, v + 1, str(round((v * 100) / total_pixels, 2)) + "%", fontsize=6)
     plt.savefig(out_path + "avg_cropped_pixels.jpg", bbox_inches='tight')
 
 
