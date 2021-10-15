@@ -38,7 +38,7 @@ if [ $# -eq 0 ]; then
         bash job.sh
     exit 0
 else
-    while getopts ":hcip" opt; do
+    while getopts ":ahcip" opt; do
         case ${opt} in
         h)
             help
