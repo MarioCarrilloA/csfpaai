@@ -11,3 +11,12 @@ predicted class.
 
 ## References
 - [Learning Deep Features for Discriminative Localization](https://arxiv.org/pdf/1512.04150.pdf)
+
+## Saliency area detection
+![img1](img/random_sample1.0.png)
+
+## New data set creation
+![img2](img/ctestds_dataset_samples_1.png)
+
+## Centroid computation
+![img3](img/centroid_data_1_sample_6.png)
